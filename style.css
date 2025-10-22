@@ -1,0 +1,1827 @@
+/* ===== RESET & BASE STYLES ===== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Sarabun', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===== TYPOGRAPHY ===== */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+/* ===== LAYOUT & CONTAINER ===== */
+.container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* ===== SECTION STYLING ===== */
+.form-section, .data-section {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+}
+
+.section-content {
+    display: none;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    background-color: #fff;
+}
+
+.section-content.active {
+    display: block;
+}
+
+/* ===== HEADER STYLES ===== */
+.main-section-header {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    font-size: clamp(1rem, 4vw, 1.2rem);
+}
+
+.main-section-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.main-section-header.active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(0);
+}
+
+.header-add-data {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    border-left: 5px solid #ff4757;
+}
+
+.header-actions {
+    background: linear-gradient(135deg, #0be881 0%, #2ed573 100%);
+    border-left: 5px solid #2ed573;
+}
+
+.header-summary {
+    background: linear-gradient(135deg, #ff9f43 0%, #ffaf60 100%);
+    border-left: 5px solid #ff9f43;
+}
+
+.section-header {
+    background-color: #f0f0f0;
+    padding: 12px 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.section-header:hover {
+    background-color: #e0e0e0;
+}
+
+.section-header.active {
+    background-color: #d0e8ff;
+}
+
+.summary-subsection-header {
+    background: linear-gradient(135deg, #a55eea 0%, #8854d0 100%);
+    color: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+    font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+}
+
+.summary-subsection-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.summary-subsection {
+    margin-bottom: 15px;
+}
+
+.summary-subsection .entry-form {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+}
+
+.summary-subsection .entry-group {
+    margin-bottom: 10px;
+}
+
+.summary-subsection select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    background-color: white;
+}
+
+.summary-subsection label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* ===== ARROW ICONS ===== */
+.arrow, .menu-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.main-section-header.active .arrow,
+.summary-subsection-header.active .arrow,
+.section-header.active .arrow,
+.main-section-header.active .menu-icon {
+    transform: rotate(180deg);
+}
+
+/* ===== FORM STYLING ===== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    width: calc(100% - 24px);
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+label {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+#customPersonInput, #customActivityTypeInput {
+    display: none;
+}
+
+/* ===== TIME INPUTS STYLING - IMPROVED FOR MOBILE ===== */
+.time-inputs-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.time-input-group input[type="time"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.time-label {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.time-separator {
+    font-weight: bold;
+    color: #333;
+    margin: 0 5px;
+    white-space: nowrap;
+}
+
+/* ===== SELECT WRAPPER STYLING ===== */
+.select-wrapper { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 8px; 
+    width: 100%; 
+    margin: 10px auto; 
+    flex-wrap: nowrap;
+    position: relative;
+}
+
+.select-wrapper label {
+    flex: 0 0 120px;
+    margin-right: 10px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.select-wrapper select { 
+    flex: 1 1 auto;
+    min-width: 150px;
+    margin: 0; 
+}
+
+.manage-btn-inline { 
+    position: static;
+    width: 36px; 
+    height: 36px; 
+    padding: 0; 
+    font-size: 18px; 
+    border-radius: 8px; 
+    background-color: #6c757d; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.manage-btn-inline:hover { 
+    background-color: #5a6268; 
+    transform: rotate(45deg); 
+}
+
+.management-actions { 
+    display: none; 
+    justify-content: center; 
+    gap: 10px; 
+    margin: 5px auto 15px; 
+    animation: fadeIn 0.3s; 
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(-10px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+.management-actions button { 
+    width: auto; 
+    padding: 6px 12px; 
+    font-size: 14px; 
+    margin: 0; 
+    border: none; 
+    color: white; 
+    transition: background-color 0.2s ease; 
+}
+
+.add-btn { background-color: #28a745; }
+.add-btn:hover { background-color: #218838; }
+.edit-btn { background-color: #ffc107; color: #212529 !important; }
+.edit-btn:hover { background-color: #e0a800; }
+.delete-btn { background-color: #dc3545; }
+.delete-btn:hover { background-color: #c82333; }
+.reset-btn { background-color: #17a2b8; }
+.reset-btn:hover { background-color: #138496; }
+
+/* ===== MANAGEMENT CONTAINER STYLING ===== */
+.management-container {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* สำหรับเดสก์ท็อป */
+@media (min-width: 769px) {
+  .management-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+}
+
+/* สำหรับมือถือ */
+@media (max-width: 768px) {
+  .management-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .management-actions button {
+    flex: 1 1 40%;
+    min-width: 60px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ===== IMPROVED MANAGEMENT ACTIONS FOR MOBILE ===== */
+@media (max-width: 768px) {
+  .management-actions {
+    display: none;
+    justify-content: center;
+    gap: 8px;
+    margin: 8px auto 12px;
+    animation: fadeIn 0.3s;
+    flex-wrap: nowrap;
+    width: 100%;
+    order: 3;
+    flex-direction: row;
+  }
+  
+  .management-actions.active {
+    display: flex;
+  }
+  
+  .management-actions button {
+    width: auto;
+    padding: 6px 10px;
+    font-size: 12px;
+    margin: 0;
+    border: none;
+    color: white;
+    transition: background-color 0.2s ease;
+    flex: 0 1 auto;
+    min-width: 60px;
+    white-space: nowrap;
+  }
+  
+  .select-wrapper {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  
+  .select-wrapper select {
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .manage-btn-inline {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    margin-right: 5px;
+  }
+}
+
+/* ===== BUTTON STYLING ===== */
+button {
+    padding: 12px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.button-container button {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* ===== TABLE STYLING ===== */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#activityTable,
+#modalBodyContent table,
+.summaryResult table,
+#activity-list-table,
+#activity-types-table,
+#user-list-table,
+#all-activities-table {
+    table-layout: auto;
+    width: auto;
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+#activityTable th, #activityTable td,
+#modalBodyContent table th, #modalBodyContent table td,
+.summaryResult table th, .summaryResult table td,
+#activity-list-table th, #activity-list-table td,
+#activity-types-table th, #activity-types-table td,
+#user-list-table th, #user-list-table td,
+#all-activities-table th, #all-activities-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 8px 6px;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 80px !important; /* ปรับตามความเหมาะสม */
+    line-height: 1.2;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.summaryResult table {
+    min-width: 450px;
+    font-size: clamp(0.5rem, 1.8vw, 0.65rem) !important;
+    text-align: left;
+}
+
+.summaryResult th,
+.summaryResult td {
+    font-size: clamp(0.5rem, 1.8vw, 0.65rem) !important;
+    padding: 2px 1px !important;
+    line-height: 1.1 !important;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    min-width: 600px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* ===== MODAL STYLING ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 1); /* ✅ เปลี่ยนจาก rgba(0,0,0,0.5) เป็นสีขาวทึบ */
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    overflow-y: auto;
+}
+
+.modal-content-container {
+    background-color: white;
+    padding: 5px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s;
+    border: 1px solid #ddd; /* ✅ เพิ่มขอบเพื่อแยกจากพื้นหลัง */
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.modal-control-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    color: white;
+}
+
+.modal-close-btn {
+    background-color: #6c757d;
+}
+
+.modal-close-btn:hover {
+    background-color: #5a6268;
+}
+
+/* ===== POPUP STYLING ===== */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: popupFadeIn 0.3s;
+}
+
+@keyframes popupFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.close-popup-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.close-popup-btn:hover {
+    background-color: #5a6268;
+}
+
+/* ===== FORMAT MODAL STYLING ===== */
+.format-modal-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.format-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.format-modal-buttons button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    color: white;
+}
+
+.btn-display {
+    background-color: #4CAF50;
+}
+
+.btn-display:hover {
+    background-color: #45a049;
+}
+
+.btn-xlsx {
+    background-color: #2196F3;
+}
+
+.btn-xlsx:hover {
+    background-color: #0b7dda;
+}
+
+.btn-pdf {
+    background-color: #f44336;
+}
+
+.btn-pdf:hover {
+    background-color: #d32f2f;
+}
+
+.btn-json {
+    background-color: #FF9800;
+}
+
+.btn-json:hover {
+    background-color: #e68900;
+}
+
+.btn-csv {
+    background-color: #009688;
+}
+
+.btn-csv:hover {
+    background-color: #00796b;
+}
+
+.btn-cancel {
+    background-color: #6c757d;
+}
+
+.btn-cancel:hover {
+    background-color: #5a6268;
+}
+
+/* ===== INSTALL PROMPT STYLING ===== */
+.install-prompt {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.close-prompt {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+}
+
+.close-prompt:hover {
+    color: #000;
+}
+
+.install-prompt h4 {
+    margin-top: 0;
+    color: #0066cc;
+}
+
+.install-prompt ul {
+    margin-bottom: 10px;
+    padding-left: 20px;
+}
+
+.install-prompt li {
+    margin-bottom: 5px;
+}
+
+/* ===== TOAST NOTIFICATION ===== */
+.toast-notification {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1001;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.5s, visibility 0.5s;
+}
+
+.toast-notification.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* ===== SUMMARY RESULT STYLING ===== */
+.summaryResult {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    /* เอา max-height และ overflow-y ออก */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.summaryResult h2 {
+    color: #333;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.summaryResult h3 {
+    color: #555;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.summaryResult p {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.summaryResult ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.summaryResult li {
+    margin-bottom: 5px;
+}
+
+/* ===== RESPONSIVE STYLES ===== */
+@media (max-width: 768px) {
+    .container {
+        padding: 5px;
+    }
+    
+    .form-section, .data-section {
+        padding: 10px;
+    }
+    
+    .main-section-header {
+        padding: 12px 15px;
+        font-size: 1.1rem;
+    }
+    
+    .section-header {
+        padding: 10px 12px;
+    }
+    
+    .summary-subsection-header {
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        padding: 10px;
+        font-size: 16px;
+    }
+    
+    button {
+        padding: 10px 15px;
+        font-size: 16px;
+    }
+    
+    .modal-content-container {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .popup-content {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .format-modal-content {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .time-inputs-container {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .time-input-group {
+        flex: 0 0 48%;
+        min-width: auto;
+    }
+    
+    .time-separator {
+        flex: 0 0 100%;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    .button-container button {
+        width: 100%;
+    }
+    
+    .modal-controls {
+        flex-direction: column;
+    }
+    
+    .modal-control-btn {
+        width: 100%;
+    }
+    
+    .modal-button-group {
+        flex-direction: column;
+    }
+    
+    .modal-button-group button {
+        width: 100%;
+    }
+    
+    .format-modal-buttons button {
+        width: 100%;
+    }
+    
+    .management-actions {
+        flex-wrap: wrap;
+    }
+    
+    .management-actions button {
+        flex: 1 1 45%;
+    }
+    
+    .select-wrapper {
+        flex-wrap: wrap;
+    }
+    
+    .select-wrapper label {
+        flex: 0 0 100%;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    
+    .select-wrapper select {
+        flex: 1 1 auto;
+    }
+    
+    .manage-btn-inline {
+        flex: 0 0 auto;
+    }
+    
+    th, td {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+    
+    table {
+        min-width: 500px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 3px;
+    }
+    
+    .form-section, .data-section {
+        padding: 8px;
+    }
+    
+    .main-section-header {
+        padding: 10px 12px;
+        font-size: 1rem;
+    }
+    
+    .section-header {
+        padding: 8px 10px;
+    }
+    
+    .summary-subsection-header {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        padding: 8px;
+    }
+    
+    button {
+        padding: 8px 12px;
+    }
+    
+    .time-input-group {
+        flex: 0 0 100%;
+    }
+    
+    .time-separator {
+        margin: 5px 0;
+    }
+    
+    .management-actions button {
+        flex: 1 1 100%;
+    }
+    
+    .select-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .select-wrapper label {
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+    
+    .select-wrapper select {
+        width: 100%;
+    }
+    
+    .manage-btn-inline {
+        align-self: flex-start;
+        margin-top: 5px;
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    #print-container, #print-container * {
+        visibility: visible;
+    }
+    
+    #print-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    button, .modal-controls, .install-prompt {
+        display: none !important;
+    }
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .main-section-header,
+    .summary-subsection-header {
+        border: 2px solid currentColor;
+    }
+    
+    button {
+        border: 1px solid currentColor;
+    }
+}
+
+/* ===== DARK MODE SUPPORT ===== */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+    
+    .form-section, .data-section {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .section-content {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #444;
+    }
+    
+    table {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    th {
+        background-color: #2d2d2d;
+    }
+    
+    tr:hover {
+        background-color: #2d2d2d;
+    }
+    
+    .modal-content-container,
+    .popup-content,
+    .format-modal-content {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    .summaryResult {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    .install-prompt {
+        background-color: #1a237e;
+        border-color: #283593;
+        color: #e0e0e0;
+    }
+    
+    .install-prompt h4 {
+        color: #bbdefb;
+    }
+}
+
+/* ===== TIME INPUTS STYLING - IMPROVED FOR MOBILE ===== */
+.time-inputs-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+.time-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 120px;
+}
+
+.time-input-group input[type="time"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.time-label {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.time-separator {
+    font-weight: bold;
+    color: #333;
+    margin: 0 5px;
+    white-space: nowrap;
+}
+
+/* ปรับปรุงสำหรับมือถือ */
+@media (max-width: 768px) {
+    .time-inputs-container {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        overflow-x: visible;
+    }
+    
+    .time-input-group {
+        flex: 0 0 48%;
+        min-width: auto;
+        margin-bottom: 10px;
+    }
+    
+    .time-separator {
+        flex: 0 0 100%;
+        text-align: center;
+        margin: 0 0 10px 0;
+        order: 3;
+    }
+}
+
+@media (max-width: 480px) {
+    .time-input-group {
+        flex: 0 0 100%;
+    }
+    
+    .time-separator {
+        margin: 5px 0;
+    }
+}
+/* ===== TABLE STYLING ===== */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#activityTable,
+#modalBodyContent table,
+.summaryResult table,
+#activity-list-table,
+#activity-types-table,
+#user-list-table,
+#all-activities-table {
+    table-layout: auto;
+    width: auto;
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+#activityTable th, #activityTable td,
+#modalBodyContent table th, #modalBodyContent table td,
+.summaryResult table th, .summaryResult table td,
+#activity-list-table th, #activity-list-table td,
+#activity-types-table th, #activity-types-table td,
+#user-list-table th, #user-list-table td,
+#all-activities-table th, #all-activities-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 8px 6px;
+    line-height: 1.2;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    min-width: 600px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+th {
+    background: linear-gradient(135deg, #4a6572 0%, #344955 100%);
+    color: white;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    border: 1px solid #2c3e50;
+}
+
+/* สีพื้นหลังสลับกันสำหรับแต่ละแถว */
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+/* สีตัวหนังสือที่ชัดเจน */
+td {
+    color: #2c3e50;
+    font-weight: 500;
+    border: 1px solid #e9ecef;
+}
+
+/* Hover effect */
+tr:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+tr:hover td {
+    color: #1a237e;
+    font-weight: 600;
+}
+
+/* สำหรับตารางใน summary */
+.summaryResult table {
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summaryResult th {
+    background: linear-gradient(135deg, #ff9f43 0%, #ff8b33 100%);
+    color: white;
+    font-weight: 600;
+    border: 1px solid #e67e22;
+}
+
+.summaryResult td {
+    color: #2c3e50;
+    font-weight: 500;
+    border: 1px solid #f1f2f6;
+}
+
+.summaryResult tr:nth-child(even) {
+    background-color: #fff9f2;
+}
+
+.summaryResult tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.summaryResult tr:hover {
+    background-color: #ffeaa7;
+}
+
+.summaryResult tr:hover td {
+    color: #e17055;
+}
+
+/* สำหรับตารางกิจกรรม */
+#activityTable th {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+}
+
+#activityTable tr:hover {
+    background-color: #e8f4fd;
+}
+
+#activityTable tr:hover td {
+    color: #1565c0;
+}
+
+/* สำหรับตารางผู้ใช้ */
+#user-list-table th {
+    background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+    color: white;
+}
+
+#user-list-table tr:hover {
+    background-color: #e0f7fa;
+}
+
+#user-list-table tr:hover td {
+    color: #006064;
+}
+
+/* สำหรับตารางประเภทกิจกรรม */
+#activity-types-table th {
+    background: linear-gradient(135deg, #f46b45 0%, #eea849 100%);
+    color: white;
+}
+
+#activity-types-table tr:hover {
+    background-color: #fff3e0;
+}
+
+#activity-types-table tr:hover td {
+    color: #e65100;
+}
+
+/* สำหรับตารางทั้งหมด */
+#all-activities-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#all-activities-table tr:hover {
+    background-color: #f3e5f5;
+}
+
+#all-activities-table tr:hover td {
+    color: #7b1fa2;
+}
+
+/* ปรับปรุงสำหรับมือถือ */
+@media (max-width: 768px) {
+    th, td {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    table {
+        min-width: 500px;
+    }
+    
+    th {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+    
+    td {
+        font-size: 0.8rem;
+        padding: 8px 10px;
+    }
+    
+    .summaryResult table {
+        font-size: 0.75rem;
+    }
+    
+    .summaryResult th,
+    .summaryResult td {
+        font-size: 0.75rem;
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    th, td {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    th {
+        font-size: 0.75rem;
+        padding: 6px 8px;
+    }
+    
+    td {
+        font-size: 0.75rem;
+        padding: 6px 8px;
+    }
+    
+    .summaryResult table {
+        font-size: 0.7rem;
+    }
+    
+    .summaryResult th,
+    .summaryResult td {
+        font-size: 0.7rem;
+        padding: 4px 6px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    table {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    th {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: #ecf0f1;
+        border: 1px solid #34495e;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #2d2d2d;
+    }
+    
+    tr:nth-child(odd) {
+        background-color: #252525;
+    }
+    
+    td {
+        color: #ecf0f1;
+        border: 1px solid #34495e;
+    }
+    
+    tr:hover {
+        background-color: #34495e;
+    }
+    
+    tr:hover td {
+        color: #ffffff;
+    }
+    
+    /* Summary table in dark mode */
+    .summaryResult table {
+        background-color: #1e1e1e;
+    }
+    
+    .summaryResult th {
+        background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+        color: white;
+    }
+    
+    .summaryResult tr:nth-child(even) {
+        background-color: #2d2d2d;
+    }
+    
+    .summaryResult tr:nth-child(odd) {
+        background-color: #252525;
+    }
+    
+    .summaryResult tr:hover {
+        background-color: #e67e22;
+    }
+    
+    .summaryResult tr:hover td {
+        color: #ffffff;
+    }
+}
+
+/* ===== MODAL STYLING ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 1);
+    z-index: 1000;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+    overflow-y: auto;
+}
+
+.modal-content-container {
+    background-color: white;
+    padding: 5px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;  /* ← เปลี่ยนเป็น 90vh */
+    overflow-y: auto;  /* ← ให้เลื่อนทั้ง modal */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s;
+    border: 1px solid #ddd;
+}
+@media (max-width: 768px) {
+    .summaryResult {
+        padding: 15px !important;
+        margin: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .modal-content-container {
+        max-height: 95vh; /* บนมือถือให้สูงเกือบเต็มจอ */
+        margin: 10px;
+        width: calc(100% - 20px);
+    }
+}
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.modal-control-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    color: white;
+}
+
+.modal-close-btn {
+    background-color: #6c757d;
+}
+
+.modal-close-btn:hover {
+    background-color: #5a6268;
+}
+
+/* ===== POPUP STYLING ===== */
+.popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 10px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: popupFadeIn 0.3s;
+}
+
+@keyframes popupFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.close-popup-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.close-popup-btn:hover {
+    background-color: #5a6268;
+}
+
+/* ===== FORMAT MODAL STYLING ===== */
+.format-modal-content {
+    background-color: white;
+    padding: 10px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.format-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.format-modal-buttons button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    color: white;
+}
+
+.btn-display {
+    background-color: #4CAF50;
+}
+
+.btn-display:hover {
+    background-color: #45a049;
+}
+
+.btn-xlsx {
+    background-color: #2196F3;
+}
+
+.btn-xlsx:hover {
+    background-color: #0b7dda;
+}
+
+.btn-pdf {
+    background-color: #f44336;
+}
+
+.btn-pdf:hover {
+    background-color: #d32f2f;
+}
+
+.btn-json {
+    background-color: #FF9800;
+}
+
+.btn-json:hover {
+    background-color: #e68900;
+}
+
+.btn-csv {
+    background-color: #009688;
+}
+
+.btn-csv:hover {
+    background-color: #00796b;
+}
+
+.btn-cancel {
+    background-color: #6c757d;
+}
+
+.btn-cancel:hover {
+    background-color: #5a6268;
+}
+@media (max-width: 768px) {
+    .summaryResult table.recent-activities {
+        font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+    }
+    
+    .summaryResult table.recent-activities th,
+    .summaryResult table.recent-activities td {
+        font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+        padding: 1px 0.5px !important;
+    }
+}
+.summaryResult table.recent-activities td {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 80px !important; /* ปรับตามความเหมาะสม */
+}
+@media (max-width: 768px) {
+    .summaryResult table.recent-activities {
+        font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+    }
+    
+    .summaryResult table.recent-activities th,
+    .summaryResult table.recent-activities td {
+        font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+        padding: 1px 0.5px !important;
+    }
+}
+@media (max-width: 480px) {
+    .summaryResult table.recent-activities {
+        font-size: clamp(0.4rem, 1.2vw, 0.55rem) !important;
+    }
+    
+    .summaryResult table.recent-activities th,
+    .summaryResult table.recent-activities td {
+        font-size: clamp(0.4rem, 1.2vw, 0.55rem) !important;
+    }
+}
+.summaryResult table.recent-activities {
+    font-size: clamp(0.5rem, 1.8vw, 0.65rem) !important;
+}
+
+.summaryResult table.recent-activities th,
+.summaryResult table.recent-activities td {
+    font-size: clamp(0.5rem, 1.8vw, 0.65rem) !important;
+    padding: 2px 1px !important;
+    line-height: 1.1 !important;
+}
+.summaryResult table {
+    min-width: 450px;
+    font-size: clamp(0.6rem, 2.2vw, 0.7rem); /* ← ตรงนี้ */
+    text-align: left;
+}
+
+.summaryResult th,
+.summaryResult td {
+    padding: 3px 2px;
+    font-size: clamp(0.6rem, 2.2vw, 0.7rem); /* ← และตรงนี้ */
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* ===== RESPONSIVE SUMMARY FRAME ===== */
+@media (max-width: 768px) {
+    .summaryResult {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        border-radius: 10px !important;
+        box-sizing: border-box !important;
+    }
+    
+    .modal-content-container {
+        padding: 10px !important;
+        margin: 10px !important;
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+    }
+    
+    #modalBodyContent {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .summaryResult {
+        padding: 8px !important;
+        border-width: 1px !important;
+    }
+    
+    .modal-content-container {
+        padding: 5px !important;
+        margin: 5px !important;
+        width: calc(100% - 10px) !important;
+        max-width: calc(100% - 10px) !important;
+    }
+}
+#activityTable td,
+#activityTable th {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: none !important;
+    word-break: break-word;
+}
+/* ===== ปรับเฉพาะตารางจัดการกิจกรรม (#activityTable) ===== */
+#activityTable {
+    table-layout: auto;
+    width: max-content; /* ตารางกว้างตามเนื้อหา */
+    min-width: 100%; /* แต่ไม่เล็กกว่า container */
+    font-size: clamp(0.7rem, 1.2vw, 0.8rem); /* ย่อขนาดอักษรอัตโนมัติ */
+}
+
+#activityTable td,
+#activityTable th {
+    white-space: nowrap !important; /* แสดงเป็นแถวเดียว */
+    overflow: hidden !important;    /* ซ่อนส่วนที่เกิน */
+    text-overflow: ellipsis !important; /* แสดง ... ถ้ายาวเกิน */
+    max-width: 200px; /* จำกัดความกว้างของแต่ละช่อง */
+    padding: 6px 8px;
+    line-height: 1.2;
+}
+
+/* เพิ่มการเลื่อนแนวนอนเฉพาะส่วนนี้ */
+.table-container {
+    overflow-x: auto !important;
+    width: 100%;
+    -webkit-overflow-scrolling: touch; /* รองรับการเลื่อนในมือถือ */
+}
