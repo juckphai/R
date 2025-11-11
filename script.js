@@ -213,7 +213,6 @@ function formatThaiTime(date) {
 }
 
 // === ฟังก์ชันตั้งค่าเวลาเริ่มต้นและระยะเวลาเริ่มต้น (ปรับปรุง) ===
-// === ฟังก์ชันตั้งค่าเวลาเริ่มต้นและระยะเวลาเริ่มต้น (แก้ไขใหม่) ===
 function setDefaultDateTime() {
     // ใช้เวลาปัจจุบันปกติ (ไม่ต้องใช้เวลาไทย)
     const now = new Date();
@@ -380,7 +379,7 @@ function autoSelectIfSingle() {
     const personDropdown = document.getElementById('personSelect');
     
     const realPersonOptions = Array.from(personDropdown.options).filter(opt => 
-        opt.value !== '' && opt.value !== 'custom'
+        opt.value !== '' // ✅ ลบการตรวจสอบ 'custom'
     );
     
     if (realPersonOptions.length === 1) {
@@ -395,7 +394,7 @@ function autoSelectIfSingle() {
     const activityTypeDropdown = document.getElementById('activityTypeSelect');
     
     const realActivityTypeOptions = Array.from(activityTypeDropdown.options).filter(opt => 
-        opt.value !== '' && opt.value !== 'custom'
+        opt.value !== '' // ✅ ลบการตรวจสอบ 'custom'
     );
     
     if (realActivityTypeOptions.length === 1) {
@@ -508,20 +507,12 @@ function populatePersonDropdown(dropdownId) {
         dropdown.appendChild(option);
     });
     
-    // เพิ่มตัวเลือก "อื่นๆ" เฉพาะเมื่อมีตัวเลือกมากกว่า 1
-    if (allPersons.length > 1) {
-        const customOption = document.createElement('option');
-        customOption.value = 'custom';
-        customOption.textContent = 'อื่นๆ (กรุณากรอกเอง)';
-        dropdown.appendChild(customOption);
-    }
+    // ✅ ไม่ต้องเพิ่มตัวเลือก "อื่นๆ" อีกต่อไป
     
-    // ✅ เรียกใช้ฟังก์ชันเลือกอัตโนมัติหลังจากโหลดข้อมูลเสร็จ
     setTimeout(() => {
         autoSelectIfSingle();
     }, 0);
     
-    // ✅ อัปเดตการแสดงผลผู้ทำกิจกรรมปัจจุบัน
     updateCurrentPersonDisplay();
     
     // คืนค่าที่เลือกไว้เดิม (ถ้ายังมีอยู่)
@@ -557,15 +548,8 @@ function populateActivityTypeDropdowns(dropdownId) {
         dropdown.appendChild(option);
     });
     
-    // เพิ่มตัวเลือก "อื่นๆ" เฉพาะเมื่อมีตัวเลือกมากกว่า 1
-    if (allActivityTypes.length > 1) {
-        const customOption = document.createElement('option');
-        customOption.value = 'custom';
-        customOption.textContent = 'อื่นๆ (กรุณากรอกเอง)';
-        dropdown.appendChild(customOption);
-    }
+    // ✅ ไม่ต้องเพิ่มตัวเลือก "อื่นๆ" อีกต่อไป
     
-    // ✅ เรียกใช้ฟังก์ชันเลือกอัตโนมัติหลังจากโหลดข้อมูลเสร็จ
     setTimeout(() => {
         autoSelectIfSingle();
     }, 0);
@@ -588,7 +572,7 @@ function editPerson() {
     const dropdown = document.getElementById('personSelect');
     const selectedValue = dropdown.value;
     
-    if (!selectedValue || selectedValue === 'custom') {
+    if (!selectedValue) {
         alert('กรุณาเลือกผู้ทำกิจกรรมที่ต้องการแก้ไข');
         return;
     }
@@ -599,40 +583,259 @@ function editPerson() {
     document.getElementById('personModal').style.display = 'flex';
 }
 
-function deletePerson() {
+// === ฟังก์ชันลบผู้ทำกิจกรรม (เวอร์ชันปรับปรุงสำหรับทั้งมือถือและคอมพิวเตอร์) ===
+function deletePerson(event) {
+    // ป้องกันการส่งฟอร์มและหยุดการแพร่กระจายของ event
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+    }
+    
+    console.log('🔄 เริ่มฟังก์ชันลบผู้ทำกิจกรรม');
+    
+    // หยุดการทำงานชั่วคราวเพื่อป้องกัน double execution
+    if (window.isDeletingPerson) {
+        console.log('⏳ กำลังลบอยู่แล้ว กรุณารอสักครู่...');
+        return;
+    }
+    
+    window.isDeletingPerson = true;
+    
+    try {
+        // ใช้ setTimeout เพื่อให้ UI อัพเดทก่อน
+        setTimeout(() => {
+            performPersonDeletionProcess();
+        }, 100);
+    } catch (error) {
+        console.error('❌ ข้อผิดพลาดในฟังก์ชันลบ:', error);
+        window.isDeletingPerson = false;
+    }
+}
+
+// === ฟังก์ชันดำเนินกระบวนการลบ ===
+function performPersonDeletionProcess() {
+    console.log('🔍 กำลังตรวจสอบข้อมูลผู้ทำกิจกรรม...');
+    
     const dropdown = document.getElementById('personSelect');
+    if (!dropdown) {
+        console.error('❌ ไม่พบ dropdown ผู้ทำกิจกรรม');
+        window.isDeletingPerson = false;
+        return;
+    }
+    
     const selectedValue = dropdown.value;
+    console.log(`👤 ผู้ทำกิจกรรมที่เลือก: "${selectedValue}"`);
     
-    if (!selectedValue || selectedValue === 'custom') {
-        alert('กรุณาเลือกผู้ทำกิจกรรมที่ต้องการลบ');
+    if (!selectedValue || selectedValue === '') {
+        showAlert('กรุณาเลือกผู้ทำกิจกรรมที่ต้องการลบ');
+        window.isDeletingPerson = false;
         return;
     }
     
-    // ตรวจสอบว่ามีกิจกรรมที่ใช้ผู้ทำกิจกรรมนี้อยู่หรือไม่
-    const isUsed = checkPersonUsage(selectedValue);
+    // ตรวจสอบว่ามีกิจกรรมที่เกี่ยวข้องหรือไม่
+    const activityCount = getActivityCountByPerson(selectedValue);
+    console.log(`📊 จำนวนกิจกรรมที่เกี่ยวข้อง: ${activityCount} รายการ`);
     
-    let confirmMessage = `คุณแน่ใจว่าต้องการลบ "${selectedValue}" ใช่หรือไม่?`;
-    if (isUsed) {
-        confirmMessage += `\n\n⚠️  คำเตือน: มีกิจกรรมที่ใช้ผู้ทำกิจกรรมนี้อยู่ ${getActivityCountByPerson(selectedValue)} รายการ กิจกรรมเหล่านี้จะยังคงแสดงชื่อ "${selectedValue}" แต่อาจไม่สามารถกรองหรือสรุปได้อย่างถูกต้อง`;
+    // สร้างข้อความยืนยัน
+    showDeletionConfirmation(selectedValue, activityCount);
+}
+
+// === ฟังก์ชันแสดงการยืนยันการลบ ===
+function showDeletionConfirmation(personName, activityCount) {
+    let message = `คุณแน่ใจว่าต้องการลบ "${personName}" ใช่หรือไม่?`;
+    
+    if (activityCount > 0) {
+        message += `\n\n⚠️  คำเตือน: มีกิจกรรมที่ใช้ผู้ทำกิจกรรมนี้อยู่ ${activityCount} รายการ\n`;
+        message += `กิจกรรมเหล่านี้จะถูกลบออกทั้งหมด!`;
     }
     
-    if (!confirm(confirmMessage)) {
-        return;
+    console.log(`💬 ข้อความยืนยัน: ${message}`);
+    
+    // ใช้ confirm แบบตรงๆ (ทำงานได้ทั้งมือถือและคอมพิวเตอร์)
+    const userConfirmed = confirm(message);
+    
+    if (userConfirmed) {
+        console.log(`✅ ผู้ใช้ยืนยันการลบ "${personName}"`);
+        executePersonDeletion(personName, activityCount);
+    } else {
+        console.log('❌ ผู้ใช้ยกเลิกการลบ');
+        window.isDeletingPerson = false;
     }
+}
+
+// === ฟังก์ชันดำเนินการลบจริง ===
+function executePersonDeletion(personName, activityCount) {
+    console.log(`🗑️ เริ่มกระบวนการลบ "${personName}"...`);
+    
+    try {
+        // 1. ลบผู้ทำกิจกรรมจากฐานข้อมูล
+        const personDeleted = deletePersonFromDatabase(personName);
+        if (!personDeleted) {
+            throw new Error('ลบผู้ทำกิจกรรมไม่สำเร็จ');
+        }
+        
+        // 2. ลบกิจกรรมที่เกี่ยวข้อง (ถ้ามี)
+        if (activityCount > 0) {
+            const activitiesDeleted = deleteRelatedActivities(personName);
+            if (!activitiesDeleted) {
+                throw new Error('ลบกิจกรรมที่เกี่ยวข้องไม่สำเร็จ');
+            }
+        }
+        
+        // 3. อัพเดท UI
+        updateUIAfterSuccessfulDeletion(personName, activityCount);
+        
+        // 4. ตรวจสอบผลการลบ
+        verifyDeletionResult(personName);
+        
+    } catch (error) {
+        console.error('❌ ข้อผิดพลาดในการลบ:', error);
+        showAlert('เกิดข้อผิดพลาดในการลบข้อมูล กรุณาลองอีกครั้ง');
+        window.isDeletingPerson = false;
+    }
+}
+
+// === ฟังก์ชันลบผู้ทำกิจกรรมจากฐานข้อมูล ===
+function deletePersonFromDatabase(personName) {
+    console.log(`📂 กำลังลบผู้ทำกิจกรรม "${personName}" จากฐานข้อมูล...`);
     
     let allPersons = getFromLocalStorage('persons') || [];
-    allPersons = allPersons.filter(person => person.name !== selectedValue);
-    saveToLocalStorage('persons', allPersons);
+    const initialCount = allPersons.length;
     
+    // กรองเอาเฉพาะผู้ทำกิจกรรมที่ไม่ใช่คนที่ต้องการลบ
+    allPersons = allPersons.filter(person => person.name !== personName);
+    
+    const finalCount = allPersons.length;
+    const deletedCount = initialCount - finalCount;
+    
+    console.log(`📊 ก่อนลบ: ${initialCount} คน, หลังลบ: ${finalCount} คน, ลบไป: ${deletedCount} คน`);
+    
+    if (deletedCount === 0) {
+        console.warn(`⚠️ ไม่พบผู้ทำกิจกรรม "${personName}" ในฐานข้อมูล`);
+        return true; // ถ้าไม่มีอยู่แล้วก็ถือว่าสำเร็จ
+    }
+    
+    // บันทึกข้อมูลใหม่
+    const saved = saveToLocalStorage('persons', allPersons);
+    
+    if (saved) {
+        console.log(`✅ ลบผู้ทำกิจกรรม "${personName}" จากฐานข้อมูลสำเร็จ`);
+        return true;
+    } else {
+        console.error(`❌ ลบผู้ทำกิจกรรม "${personName}" จากฐานข้อมูลไม่สำเร็จ`);
+        return false;
+    }
+}
+
+// === ฟังก์ชันลบกิจกรรมที่เกี่ยวข้อง ===
+function deleteRelatedActivities(personName) {
+    console.log(`📝 กำลังลบกิจกรรมที่เกี่ยวข้องกับ "${personName}"...`);
+    
+    let allActivities = getFromLocalStorage('activities') || [];
+    const initialCount = allActivities.length;
+    
+    if (initialCount === 0) {
+        console.log('ℹ️ ไม่มีกิจกรรมในระบบ');
+        return true;
+    }
+    
+    // กรองเอาเฉพาะกิจกรรมที่ไม่ได้ใช้ผู้ทำกิจกรรมนี้
+    allActivities = allActivities.filter(activity => activity.person !== personName);
+    
+    const finalCount = allActivities.length;
+    const deletedCount = initialCount - finalCount;
+    
+    console.log(`📊 ก่อนลบ: ${initialCount} กิจกรรม, หลังลบ: ${finalCount} กิจกรรม, ลบไป: ${deletedCount} กิจกรรม`);
+    
+    if (deletedCount === 0) {
+        console.log(`ℹ️ ไม่พบกิจกรรมที่เกี่ยวข้องกับ "${personName}"`);
+        return true;
+    }
+    
+    // บันทึกข้อมูลใหม่
+    const saved = saveToLocalStorage('activities', allActivities);
+    
+    if (saved) {
+        console.log(`✅ ลบกิจกรรมที่เกี่ยวข้องกับ "${personName}" สำเร็จ (${deletedCount} รายการ)`);
+        return true;
+    } else {
+        console.error(`❌ ลบกิจกรรมที่เกี่ยวข้องกับ "${personName}" ไม่สำเร็จ`);
+        return false;
+    }
+}
+
+// === ฟังก์ชันอัพเดท UI หลังลบสำเร็จ ===
+function updateUIAfterSuccessfulDeletion(personName, activityCount) {
+    console.log('🎨 กำลังอัพเดท UI...');
+    
+    // 1. อัพเดท dropdown ผู้ทำกิจกรรม
     populatePersonDropdown('personSelect');
+    console.log('✅ อัพเดท dropdown ผู้ทำกิจกรรมเรียบร้อย');
     
-    // ✅ อัพเดทการแสดงผลในหน้าสรุปด้วย
+    // 2. อัพเดทตัวกรองในหน้าสรุป
     updatePersonFilterAfterChange();
+    console.log('✅ อัพเดทตัวกรองผู้ทำกิจกรรมเรียบร้อย');
     
-    notifyDataUpdated('person', 'delete');
+    // 3. โหลดกิจกรรมใหม่
+    loadUserActivities();
+    console.log('✅ โหลดกิจกรรมใหม่เรียบร้อย');
     
-    // ✅ รีเซ็ตการแสดงผลอัตโนมัติ
+    // 4. รีเซ็ตการเลือกอัตโนมัติ
     resetAutoSelectionDisplay('person');
+    console.log('✅ รีเซ็ตการเลือกอัตโนมัติเรียบร้อย');
+    
+    // 5. แสดงข้อความสำเร็จ
+    let successMessage = `ลบผู้ทำกิจกรรม "${personName}" เรียบร้อยแล้ว`;
+    if (activityCount > 0) {
+        successMessage += ` และลบกิจกรรมที่เกี่ยวข้อง ${activityCount} รายการ`;
+    }
+    
+    showToast(successMessage, 'success');
+    console.log(`✅ แสดงข้อความสำเร็จ: ${successMessage}`);
+}
+
+// === ฟังก์ชันตรวจสอบผลการลบ ===
+function verifyDeletionResult(personName) {
+    console.log(`🔍 กำลังตรวจสอบผลการลบ "${personName}"...`);
+    
+    // ตรวจสอบหลังจากอัพเดท UI แล้ว
+    setTimeout(() => {
+        const allPersons = getFromLocalStorage('persons') || [];
+        const allActivities = getFromLocalStorage('activities') || [];
+        
+        const personStillExists = allPersons.some(person => person.name === personName);
+        const activitiesStillExist = allActivities.some(activity => activity.person === personName);
+        
+        console.log(`📊 ผลการตรวจสอบ:`);
+        console.log(`   - ผู้ทำกิจกรรมยังอยู่: ${personStillExists}`);
+        console.log(`   - กิจกรรมยังอยู่: ${activitiesStillExist}`);
+        
+        if (!personStillExists && !activitiesStillExist) {
+            console.log('✅ การลบสำเร็จสมบูรณ์!');
+        } else {
+            console.warn('⚠️ การลบไม่สมบูรณ์!');
+            if (personStillExists) {
+                console.warn(`   - ผู้ทำกิจกรรม "${personName}" ยังคงอยู่ในระบบ`);
+            }
+            if (activitiesStillExist) {
+                const remainingActivities = allActivities.filter(activity => activity.person === personName).length;
+                console.warn(`   - มีกิจกรรมของ "${personName}" ยังคงอยู่ ${remainingActivities} รายการ`);
+            }
+        }
+        
+        // คืนสถานะการลบ
+        window.isDeletingPerson = false;
+        
+    }, 500);
+}
+
+// === ฟังก์ชันแสดง Alert (รองรับทั้งมือถือและคอมพิวเตอร์) ===
+function showAlert(message) {
+    // ใช้ setTimeout เพื่อให้ทำงานได้ทั้งบนมือถือ
+    setTimeout(() => {
+        alert(message);
+    }, 10);
 }
 
 function savePerson(e) {
@@ -744,7 +947,7 @@ function editActivityType() {
     const dropdown = document.getElementById('activityTypeSelect');
     const selectedValue = dropdown.value;
     
-    if (!selectedValue || selectedValue === 'custom') {
+    if (!selectedValue) {
         alert('กรุณาเลือกประเภทกิจกรรมที่ต้องการแก้ไข');
         return;
     }
@@ -759,7 +962,7 @@ function deleteActivityType() {
     const dropdown = document.getElementById('activityTypeSelect');
     const selectedValue = dropdown.value;
     
-    if (!selectedValue || selectedValue === 'custom') {
+    if (!selectedValue) {
         alert('กรุณาเลือกประเภทกิจกรรมที่ต้องการลบ');
         return;
     }
@@ -910,24 +1113,6 @@ function toggleManagementActions(actionsId, otherActionsId) {
     }
     
     console.log(`🔄 สลับการแสดงผล ${actionsId}: ${actions.style.display}`);
-}
-
-// === ฟังก์ชันจัดการประเภทกิจกรรม (รูปแบบฟันเฟือง) ===
-function checkCustomActivityTypeOption(select) {
-    if (select.value === 'custom') {
-        document.getElementById('customActivityTypeInput').style.display = 'block';
-    } else {
-        document.getElementById('customActivityTypeInput').style.display = 'none';
-    }
-}
-
-// === ฟังก์ชันจัดการผู้ทำกิจกรรม (รูปแบบฟันเฟือง) ===
-function checkCustomOption(select) {
-    if (select.value === 'custom') {
-        document.getElementById('customPersonInput').style.display = 'block';
-    } else {
-        document.getElementById('customPersonInput').style.display = 'none';
-    }
 }
 
 // === ฟังก์ชันจัดการกิจกรรม ===
@@ -2150,41 +2335,41 @@ function displaySummary() {
     let personSummaryText = '';
     if (allPersonsInSystem.length === 1) {
         // ✅ กรณีมีผู้ทำกิจกรรมแค่คนเดียวในระบบ: แสดงชื่อคนนั้นเลย
-        personSummaryText = `สรุปกิจกรรมของ: ${allPersonsInSystem[0].name}`;
+        personSummaryText = `สรุปกิจกรรมของ : ${allPersonsInSystem[0].name}`;
     } else if (allPersons.length > 0) {
         // กรณีมีหลายคน: แสดงตามที่เลือก
-        personSummaryText = `สรุปกิจกรรมของ: ${personFilter === 'all' ? 'ทุกคน' : allPersons.join(', ')}`;
+        personSummaryText = `สรุปกิจกรรมของ : ${personFilter === 'all' ? 'ทุกคน' : allPersons.join(', ')}`;
     } else {
         personSummaryText = 'ไม่มีข้อมูลผู้ทำกิจกรรม';
     }
 
     // สร้าง HTML หลัก
     let summaryHTML = `
-        <div class="summaryResult" style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 8px; border: 1.5px solid #F660EB; border-radius: 15px; background-color: #FAFAD2; text-align: center; line-height: 1.0; width: 100%; box-sizing: border-box;">
+        <div class="summaryResult" style="font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 2px; border: 1.5px solid #F660EB; border-radius: 5px; background-color: #FAFAD2; text-align: center; line-height: 1.0; width: 100%; box-sizing: border-box;">
             <div style="text-align: center; margin: 2px 0;">
-                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.0; margin: 2px 0;">
+                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.2; margin: 2px 0;">
                     ${personSummaryText}
                 </h3>
             </div>
             <div style="text-align: center; margin: 2px 0;">
-                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.0; margin: 2px 0;">
+                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.2; margin: 2px 0;">
                     สรุปวันที่ ${getCurrentDateTimeThai().replace(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/, '$1 เวลา $2 น.')}
                 </h3>
             </div>
             <div style="text-align: center; margin: 2px 0;">
-                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.0; margin: 2px 0;">
+                <h3 style="color: blue; font-size: 0.9rem; line-height: 1.2; margin: 2px 0;">
                     ${dateRangeText}
                 </h3>
             </div>
 
             <!-- ส่วนสรุปจำนวนวัน - แก้ไขให้แสดงในทุกกรณี -->
             <div style="background-color: #FAFAD2; padding: 5px; margin: 5px 0; text-align: center; color: blue;">
-                <h4 style="margin: 5px 0; font-size: 0.9rem; line-height: 1.0;">สรุปจำนวนวัน</h4>
-                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.2;">• จำนวนวันทั้งหมด: ${totalDays} วัน</p>
-                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.2;">• จำนวนวันที่มีกิจกรรม: ${daysWithActivities} วัน</p>
-                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.2;">• วันที่ไม่มีกิจกรรม: ${daysWithoutActivities} วัน</p>
-                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.2;">• เวลาเฉลี่ยต่อวัน: ${formatDuration(avgDurationPerDay)}</p>
-                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.2;">• รวมเวลาทั้งหมด: ${formatDuration(totalDurationAll)}</p>
+                <h4 style="margin: 5px 0; font-size: 0.9rem; line-height: 1.2;">สรุปจำนวนวัน</h4>
+                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.0;">• จำนวนวันทั้งหมด : ${totalDays} วัน</p>
+                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.0;">• จำนวนวันที่มีกิจกรรม : ${daysWithActivities} วัน</p>
+                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.0;">• วันที่ไม่มีกิจกรรม : ${daysWithoutActivities} วัน</p>
+                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.0;">• เวลาเฉลี่ยต่อวัน : ${formatDuration(avgDurationPerDay)}</p>
+                <p style="margin: 3px 0; font-size: 0.9rem; line-height: 1.0;">• รวมเวลาทั้งหมด : ${formatDuration(totalDurationAll)}</p>
             </div>
 
             <h4 style="color: #0056b3; margin: 5px 0; font-size: 0.9rem;">
@@ -2358,7 +2543,8 @@ function exportSummaryToXLSX() {
     notifyDataManagement('export');
 }
 
-// === ฟังก์ชันสำหรับการพิมพ์ PDF ที่ปรับปรุงแล้ว ===
+
+// === ฟังก์ชันสำหรับการพิมพ์ PDF ที่ปรับปรุงแล้ว (ไม่ใช้ popup) ===
 function exportSummaryToPDF() {
     const { type, activities, startDate, endDate, personFilter } = summaryContext;
     
@@ -2480,7 +2666,7 @@ function exportSummaryToPDF() {
                     font-family: Arial, sans-serif; 
                     margin: 10mm 3mm 5mm 8mm;
                     padding: 0;
-                    color: #000;
+                    color: blue;
                     line-height: 1.0;
                     font-size: 7px;
                     text-align: center;
@@ -2541,11 +2727,12 @@ function exportSummaryToPDF() {
                     margin: 2px 0;
                     font-size: 0.6rem;
                     table-layout: fixed;
+                    color: blue;
                 }
                 
                 th { 
                     background-color: #007bff;
-                    color: white;
+                    color: blue;
                     padding: 1px;
                     border: 0.5px solid #ddd;
                     text-align: center;
@@ -2561,6 +2748,7 @@ function exportSummaryToPDF() {
                     font-size: 0.55rem;
                     line-height: 1.0;
                     height: 7px;
+                    color: blue;
                 }
 
                 /* ตั้งค่าหน้ากระดาษ */
@@ -2572,6 +2760,7 @@ function exportSummaryToPDF() {
                 /* ตารางแบบกะทัดรัดมากสำหรับกิจกรรมทั้งหมด */
                 .super-compact-table {
                     font-size: 0.5rem;
+                    color: blue;
                 }
                 
                 .super-compact-table th,
@@ -2579,6 +2768,7 @@ function exportSummaryToPDF() {
                     padding: 0.5px;
                     font-size: 0.5rem;
                     height: 6px;
+                    color: blue;
                 }
 
                 /* ปรับความกว้างคอลัมน์ให้พอดี */
@@ -2620,7 +2810,7 @@ function exportSummaryToPDF() {
 
                 <!-- ส่วนสรุปตามประเภทกิจกรรม -->
                 <div class="no-break">
-                    <h4 style="color: #0056b3; margin: 1px 0; font-size: 0.7rem;">
+                    <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
                         สรุปตามประเภทกิจกรรม
                     </h4>
                     <table>
@@ -2653,7 +2843,7 @@ function exportSummaryToPDF() {
     if (type === 'brief-summary') {
         printHTML += `
             <div class="no-break">
-                <h4 style="color: #0056b3; margin: 1px 0; font-size: 0.7rem;">
+                <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
                     กิจกรรมล่าสุด (15 รายการ)
                 </h4>
                 <table>
@@ -2699,7 +2889,7 @@ function exportSummaryToPDF() {
         // สำหรับสรุปแบบเต็ม - ใช้ตารางแบบกะทัดรัดมาก
         printHTML += `
             <div class="no-break">
-                <h4 style="color: #0056b3; margin: 1px 0; font-size: 0.7rem;">
+                <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
                     รายการกิจกรรมทั้งหมด (${activities.length} รายการ)
                 </h4>
                 <table class="super-compact-table">
@@ -2748,36 +2938,77 @@ function exportSummaryToPDF() {
     
     printHTML += `
             </div>
-            <div style="font-size: 5px; margin-top: 1px; text-align: center;">
+            <div style="font-size: 5px; margin-top: 1px; text-align: center; color: blue;">
                 สร้างเมื่อ: ${new Date().toLocaleDateString('th-TH')} - ระบบบันทึกกิจกรรม
             </div>
         </body>
         </html>
     `;
     
-    // สร้างหน้าต่างใหม่สำหรับพิมพ์
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-        alert('กรุณาอนุญาตป๊อปอัพสำหรับการพิมพ์ PDF');
-        return;
-    }
-    
-    // ตั้งชื่อ title ให้กับหน้าต่าง (ช่วยในการตั้งชื่อไฟล์เมื่อบันทึก)
-    printWindow.document.title = fileName;
-    
-    // เขียน HTML ไปยังหน้าต่างใหม่
-    printWindow.document.open();
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-    
-    // พิมพ์อัตโนมัติเมื่อโหลดหน้าเสร็จ
-    printWindow.onload = function() {
-        setTimeout(function() {
-            printWindow.print();
+    // วิธีที่ 1: พิมพ์โดยตรงในหน้าเดิม (ไม่ใช้ popup)
+    try {
+        // สร้าง iframe แทนการใช้ window.open
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(printHTML);
+        iframeDoc.close();
+        
+        // พิมพ์หลังจากโหลดเนื้อหาเสร็จ
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            
+            // ลบ iframe หลังจากพิมพ์เสร็จ
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+            
         }, 500);
-    };
-    
-    showToast('กำลังเปิดหน้าต่างพิมพ์ PDF...', 'success');
+        
+        showToast('กำลังเตรียมพิมพ์ PDF...', 'success');
+        
+    } catch (error) {
+        console.error('Error printing PDF:', error);
+        
+        // วิธีที่ 2: ใช้วิธีพิมพ์ธรรมดาในกรณีที่วิธีแรกไม่ทำงาน
+        try {
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(printHTML);
+                printWindow.document.close();
+                printWindow.print();
+            } else {
+                // วิธีที่ 3: แสดง HTML ในหน้าเดิมและพิมพ์
+                const printSection = document.createElement('div');
+                printSection.innerHTML = printHTML;
+                printSection.style.position = 'fixed';
+                printSection.style.top = '0';
+                printSection.style.left = '0';
+                printSection.style.width = '100%';
+                printSection.style.height = '100%';
+                printSection.style.zIndex = '9999';
+                printSection.style.backgroundColor = 'white';
+                printSection.style.overflow = 'auto';
+                
+                document.body.appendChild(printSection);
+                
+                setTimeout(() => {
+                    window.print();
+                    setTimeout(() => {
+                        document.body.removeChild(printSection);
+                    }, 100);
+                }, 500);
+            }
+        } catch (fallbackError) {
+            console.error('Fallback printing also failed:', fallbackError);
+            alert('ไม่สามารถพิมพ์ PDF ได้ กรุณาตรวจสอบการตั้งค่าป้องกันป๊อปอัพของเบราว์เซอร์');
+        }
+    }
 }
 // ฟังก์ชันเสริมสำหรับการพิมพ์ PDF
 function getCurrentDateTimeThai() {
@@ -2929,61 +3160,142 @@ function cleanDuplicateData() {
     }
 }
 
-// ฟังก์ชันทำความสะอาดข้อมูลขั้นสูง
+// === ฟังก์ชันทำความสะอาดข้อมูลขั้นสูง (แก้ไขเวอร์ชัน) ===
 function advancedDataCleanup() {
-    if (!confirm('การทำความสะอาดข้อมูลขั้นสูงจะลบกิจกรรมที่ซ้ำกันและข้อมูลที่ไม่สมบูรณ์\n\nคุณแน่ใจหรือไม่?')) {
+    if (!confirm('คุณแน่ใจว่าต้องการทำความสะอาดข้อมูลขั้นสูง?\nการกระทำนี้จะลบ:\n• กิจกรรมที่ข้อมูลไม่สมบูรณ์\n• ผู้ทำกิจกรรมที่ไม่ได้ใช้\n• ประเภทกิจกรรมที่ไม่ได้ใช้\n• กิจกรรมที่ไม่มีผู้ทำกิจกรรม\n\nการกระทำนี้ไม่สามารถย้อนกลับได้')) {
         return;
     }
     
-    let allActivities = getFromLocalStorage('activities') || [];
-    const initialCount = allActivities.length;
+    const allActivities = getFromLocalStorage('activities') || [];
+    const allPersons = getFromLocalStorage('persons') || [];
+    const allActivityTypes = getFromLocalStorage('activityTypes') || [];
+    
+    const originalStats = {
+        activities: allActivities.length,
+        persons: allPersons.length,
+        activityTypes: allActivityTypes.length
+    };
+    
+    // 1. ลบกิจกรรมที่ข้อมูลไม่สมบูรณ์
+    const cleanedActivities = allActivities.filter(activity => 
+        activity.date && activity.startTime && activity.endTime && 
+        activity.person && activity.activityName &&
+        activity.id && typeof activity.id === 'string' &&
+        calculateDuration(activity.startTime, activity.endTime) > 0
+    );
+    
+    // 2. ลบกิจกรรมซ้ำ
+    const uniqueActivities = removeDuplicateActivities(cleanedActivities);
+    
+    // 3. ลบกิจกรรมที่ไม่มีผู้ทำกิจกรรม (เพิ่มส่วนนี้)
+    const validPersons = new Set(allPersons.map(person => person.name));
+    const activitiesWithValidPersons = uniqueActivities.filter(activity => 
+        validPersons.has(activity.person)
+    );
+    
+    // 4. ลบผู้ทำกิจกรรมที่ไม่ได้ใช้
+    const usedPersons = new Set(activitiesWithValidPersons.map(activity => activity.person));
+    const cleanedPersons = allPersons.filter(person => usedPersons.has(person.name));
+    
+    // 5. ลบประเภทกิจกรรมที่ไม่ได้ใช้
+    const usedActivityTypes = new Set(activitiesWithValidPersons.map(activity => activity.activityName));
+    const cleanedActivityTypes = allActivityTypes.filter(type => usedActivityTypes.has(type.name));
+    
+    // 6. บันทึกข้อมูลที่ทำความสะอาดแล้ว
+    saveToLocalStorage('activities', activitiesWithValidPersons);
+    saveToLocalStorage('persons', cleanedPersons);
+    saveToLocalStorage('activityTypes', cleanedActivityTypes);
+    
+    const finalStats = {
+        activities: activitiesWithValidPersons.length,
+        persons: cleanedPersons.length,
+        activityTypes: cleanedActivityTypes.length
+    };
+    
+    // สร้างรายงานผล
+    let report = "🔧 ผลการทำความสะอาดข้อมูลขั้นสูง\n\n";
+    report += "📊 ก่อนทำความสะอาด:\n";
+    report += `   • กิจกรรม: ${originalStats.activities} รายการ\n`;
+    report += `   • ผู้ทำกิจกรรม: ${originalStats.persons} คน\n`;
+    report += `   • ประเภทกิจกรรม: ${originalStats.activityTypes} ประเภท\n\n`;
+    
+    report += "📊 หลังทำความสะอาด:\n";
+    report += `   • กิจกรรม: ${finalStats.activities} รายการ\n`;
+    report += `   • ผู้ทำกิจกรรม: ${finalStats.persons} คน\n`;
+    report += `   • ประเภทกิจกรรม: ${finalStats.activityTypes} ประเภท\n\n`;
+    
+    // คำนวณสถิติการลบ
+    const removedDuplicates = originalStats.activities - uniqueActivities.length;
+    const removedOrphaned = uniqueActivities.length - activitiesWithValidPersons.length;
+    const removedIncomplete = originalStats.activities - cleanedActivities.length;
+    const totalRemovedActivities = originalStats.activities - finalStats.activities;
+    
+    report += "🗑️  ลบไปแล้ว:\n";
+    report += `   • กิจกรรมซ้ำ: ${removedDuplicates} รายการ\n`;
+    report += `   • กิจกรรมไม่มีผู้ทำ: ${removedOrphaned} รายการ\n`;
+    report += `   • กิจกรรมไม่สมบูรณ์: ${removedIncomplete} รายการ\n`;
+    report += `   • ผู้ทำกิจกรรมที่ไม่ได้ใช้: ${originalStats.persons - finalStats.persons} คน\n`;
+    report += `   • ประเภทกิจกรรมที่ไม่ได้ใช้: ${originalStats.activityTypes - finalStats.activityTypes} ประเภท\n\n`;
+    
+    report += `📝 สรุป: ลบกิจกรรมทั้งหมด ${totalRemovedActivities} รายการ\n\n`;
+    report += "✅ ทำความสะอาดข้อมูลเรียบร้อยแล้ว!";
+    
+    alert(report);
+    
+    // โหลดข้อมูลใหม่
+    loadUserActivities();
+    populatePersonDropdown('personSelect');
+    populateActivityTypeDropdowns('activityTypeSelect');
+    populatePersonFilter();
+    
+    showToast('ทำความสะอาดข้อมูลขั้นสูงเรียบร้อยแล้ว', 'success');
+    
+    return {
+        originalStats: originalStats,
+        finalStats: finalStats,
+        removedOrphaned: removedOrphaned
+    };
+}
+// === ฟังก์ชันลบกิจกรรมที่ไม่มีผู้ทำกิจกรรม ===
+function cleanOrphanedActivities() {
+    const allActivities = getFromLocalStorage('activities') || [];
+    const allPersons = getFromLocalStorage('persons') || [];
     
     if (allActivities.length === 0) {
         alert('ไม่มีข้อมูลกิจกรรมให้ทำความสะอาด');
         return;
     }
     
-    // ขั้นตอนที่ 1: ลบกิจกรรมซ้ำโดยใช้ ID
-    const uniqueActivities = [];
-    const seenIds = new Set();
+    // หาผู้ทำกิจกรรมทั้งหมดที่มีอยู่ในระบบ
+    const validPersons = new Set(allPersons.map(person => person.name));
     
-    allActivities.forEach(activity => {
-        if (!seenIds.has(activity.id)) {
-            seenIds.add(activity.id);
-            uniqueActivities.push(activity);
-        }
-    });
-    
-    // ขั้นตอนที่ 2: ลบกิจกรรมที่ไม่สมบูรณ์
-    const completeActivities = uniqueActivities.filter(activity => 
-        activity.date && 
-        activity.startTime && 
-        activity.endTime && 
-        activity.person && 
-        activity.activityName
+    // กรองเฉพาะกิจกรรมที่มีผู้ทำกิจกรรมที่ยังมีอยู่ในระบบ
+    const validActivities = allActivities.filter(activity => 
+        validPersons.has(activity.person)
     );
     
-    allActivities = completeActivities;
-    saveToLocalStorage('activities', allActivities);
+    const removedCount = allActivities.length - validActivities.length;
     
-    const removedDuplicates = initialCount - uniqueActivities.length;
-    const removedIncomplete = uniqueActivities.length - completeActivities.length;
-    const totalRemoved = initialCount - completeActivities.length;
+    if (removedCount === 0) {
+        alert('ไม่พบกิจกรรมที่ไม่มีผู้ทำกิจกรรม');
+        return;
+    }
     
-    // โหลดกิจกรรมใหม่เพื่ออัปเดตการแสดงผล
+    if (!confirm(`พบกิจกรรมที่ไม่มีผู้ทำกิจกรรม ${removedCount} รายการ\n\nคุณแน่ใจว่าต้องการลบกิจกรรมเหล่านี้ใช่หรือไม่?`)) {
+        return;
+    }
+    
+    // บันทึกข้อมูลที่ทำความสะอาดแล้ว
+    saveToLocalStorage('activities', validActivities);
+    
+    // โหลดข้อมูลใหม่
     loadUserActivities();
     
-    let message = `ทำความสะอาดข้อมูลเรียบร้อย!\n\n`;
-    message += `• จำนวนกิจกรรมเริ่มต้น: ${initialCount} รายการ\n`;
-    message += `• ลบกิจกรรมซ้ำ: ${removedDuplicates} รายการ\n`;
-    message += `• ลบกิจกรรมไม่สมบูรณ์: ${removedIncomplete} รายการ\n`;
-    message += `• จำนวนกิจกรรมหลังทำความสะอาด: ${completeActivities.length} รายการ\n`;
-    message += `• ลบทั้งหมด: ${totalRemoved} รายการ`;
+    showToast(`ลบกิจกรรมที่ไม่มีผู้ทำกิจกรรมเรียบร้อยแล้ว (${removedCount} รายการ)`, 'success');
     
-    alert(message);
-    showToast('ทำความสะอาดข้อมูลขั้นสูงเรียบร้อยแล้ว', 'success');
+    // แสดงรายงานผล
+    alert(`✅ ทำความสะอาดกิจกรรมที่ไม่มีผู้ทำกิจกรรมเรียบร้อย!\n\n• ก่อนทำความสะอาด: ${allActivities.length} รายการ\n• หลังทำความสะอาด: ${validActivities.length} รายการ\n• ลบไปแล้ว: ${removedCount} รายการ`);
 }
-
 // =============================================
 // ระบบตรวจสอบสุขภาพข้อมูลและทำความสะอาด
 // =============================================
@@ -3679,8 +3991,8 @@ function hideInstallPromptPermanently() {
     localStorage.setItem('hideInstallPrompt', 'true');
 }
 
+// === ฟังก์ชันตรวจสอบและแสดงคำแนะนำการติดตั้ง ===
 function checkAndShowInstallPrompt() {
-    // ตรวจสอบว่าซ่อนคำแนะนำการติดตั้งหรือไม่
     if (localStorage.getItem('hideInstallPrompt') === 'true') {
         const installGuide = document.getElementById('install-guide');
         if (installGuide) {
@@ -3689,6 +4001,150 @@ function checkAndShowInstallPrompt() {
     }
 }
 
+// === ฟังก์ชันเตรียมข้อมูลเริ่มต้น ===
+function initializeDefaultData() {
+    console.log('📂 กำลังเตรียมข้อมูลเริ่มต้น...');
+    
+    // โหลดรหัสผ่านสำรองข้อมูล
+    backupPassword = getFromLocalStorage('backupPassword') || null;
+    
+    // เรียกแสดงสถานะรหัสผ่าน
+    renderBackupPasswordStatus();
+    
+    // กำหนดค่าเริ่มต้นสำหรับประเภทกิจกรรม
+    if (!getFromLocalStorage('activityTypes') || getFromLocalStorage('activityTypes').length === 0) {
+        const defaultActivityTypes = [
+            { name: 'นั่งสมาธิ' },
+            { name: 'เดินจงกรม' },
+            { name: 'สวดมนต์' }
+        ];
+        saveToLocalStorage('activityTypes', defaultActivityTypes);
+        console.log('✅ สร้างประเภทกิจกรรมเริ่มต้น');
+    }
+    
+    // กำหนดค่าเริ่มต้นสำหรับผู้ทำกิจกรรม
+    if (!getFromLocalStorage('persons') || getFromLocalStorage('persons').length === 0) {
+        const defaultPersons = [
+            { name: 'อาจารย์' },
+            { name: 'ลูกศิษย์' },
+            { name: 'เด็กวัด' },
+        ];
+        saveToLocalStorage('persons', defaultPersons);
+        console.log('✅ สร้างผู้ทำกิจกรรมเริ่มต้น');
+    }
+    
+    // โหลดข้อมูลลงใน dropdowns
+    populateActivityTypeDropdowns('activityTypeSelect');
+    populatePersonDropdown('personSelect');
+    populatePersonFilter();
+    
+    // ตั้งค่าวันที่และเวลาเริ่มต้นให้อัตโนมัติ
+    setDefaultDateTime();
+}
+
+// === ฟังก์ชันสำหรับ Responsive Design ===
+function initResponsiveDesign() {
+    // ตรวจสอบขนาดหน้าจอและปรับการแสดงผล
+    checkScreenSize();
+    
+    // ปรับปรุงการแสดงผลตารางบนมือถือ
+    adjustTableForMobile();
+    adjustTimeInputsForMobile();
+}
+
+function checkScreenSize() {
+    const isMobile = window.innerWidth <= 768;
+    
+    // เพิ่มคลาส 'mobile' ให้กับ body ถ้าเป็นมือถือ
+    if (isMobile) {
+        document.body.classList.add('mobile');
+    } else {
+        document.body.classList.remove('mobile');
+    }
+    
+    // ปรับปรุงการแสดงผลเมนู
+    adjustMenuForMobile(isMobile);
+}
+
+function adjustTableForMobile() {
+    const modalContent = document.querySelector('.modal-content-container');
+    const summaryResult = document.querySelector('.summaryResult');
+    const tables = document.querySelectorAll('.summaryResult table');
+    
+    if (window.innerWidth <= 768) {
+        // ปรับ modal ให้เต็มพื้นที่มากขึ้น
+        if (modalContent) {
+            modalContent.style.width = '95%';
+            modalContent.style.maxWidth = '95%';
+            modalContent.style.margin = '10px auto';
+        }
+        
+        // ปรับตาราง
+        tables.forEach(table => {
+            table.style.width = '100%';
+            table.style.minWidth = '100%';
+            table.style.tableLayout = 'fixed';
+        });
+        
+        // ปรับ container ของตาราง
+        if (summaryResult) {
+            summaryResult.style.width = '100%';
+            summaryResult.style.overflowX = 'auto';
+        }
+    }
+}
+
+function adjustTimeInputsForMobile() {
+    const timeInputsContainer = document.querySelector('.time-inputs-container');
+    if (!timeInputsContainer) return;
+    
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // บนมือถือ: ใช้ flexbox เพื่อให้อยู่ในแถวเดียวกัน
+        timeInputsContainer.style.flexWrap = 'nowrap';
+        timeInputsContainer.style.overflowX = 'auto';
+        timeInputsContainer.style.justifyContent = 'space-between';
+        
+        // ปรับขนาดขั้นต่ำของกลุ่มเวลา
+        const timeInputGroups = timeInputsContainer.querySelectorAll('.time-input-group');
+        timeInputGroups.forEach(group => {
+            group.style.minWidth = '100px';
+            group.style.flex = '1';
+        });
+    } else {
+        // บนเดสก์ท็อป: รีเซ็ตค่า
+        timeInputsContainer.style.flexWrap = '';
+        timeInputsContainer.style.overflowX = '';
+        timeInputsContainer.style.justifyContent = '';
+        
+        const timeInputGroups = timeInputsContainer.querySelectorAll('.time-input-group');
+        timeInputGroups.forEach(group => {
+            group.style.minWidth = '';
+            group.style.flex = '';
+        });
+    }
+}
+
+function adjustMenuForMobile(isMobile) {
+    // ปรับปรุงการแสดงผลเมนูสำหรับมือถือ
+    // สามารถเพิ่มโค้ดเฉพาะสำหรับมือถือได้ที่นี่
+}
+
+// === ฟังก์ชันจัดการการแสดงผลตัวกรองผู้ทำกิจกรรม ===
+function updatePersonFilterVisibility() {
+    const personFilterContainer = document.querySelector('.person-filter-container');
+    const allPersons = getFromLocalStorage('persons') || [];
+    
+    if (personFilterContainer) {
+        if (allPersons.length === 1) {
+            personFilterContainer.style.display = 'none';
+            console.log('✅ ซ่อน dropdown กรองผู้ทำกิจกรรม (มีแค่คนเดียว)');
+        } else {
+            personFilterContainer.style.display = 'block';
+        }
+    }
+}
 // === ฟังก์ชันทำความสะอาดข้อมูลทั้งหมด (รวม 3 ฟังก์ชันเดิม) ===
 function cleanAllData() {
     if (!confirm('คุณแน่ใจว่าต้องการทำความสะอาดข้อมูลทั้งหมด?\n\nการดำเนินการนี้จะ:\n1. ตรวจสอบสุขภาพข้อมูล\n2. ลบข้อมูลซ้ำอัตโนมัติ\n3. ทำความสะอาดข้อมูลขั้นสูง\n\nการกระทำนี้ไม่สามารถย้อนกลับได้')) {
@@ -3909,71 +4365,321 @@ document.addEventListener('DOMContentLoaded', function() {
     loadUserActivities();
     populatePersonFilter();
     
-// กำหนดค่าเริ่มต้นสำหรับฟิลด์สรุป (ใช้เวลาไทย)
-const thaiToday = getThaiDateString();
-document.getElementById('summary-date').value = thaiToday;
-document.getElementById('summary-start-date').value = thaiToday;
-document.getElementById('summary-end-date').value = thaiToday;
+    // กำหนดค่าเริ่มต้นสำหรับฟิลด์สรุป (ใช้เวลาไทย)
+    const thaiToday = getThaiDateString();
+    document.getElementById('summary-date').value = thaiToday;
+    document.getElementById('summary-start-date').value = thaiToday;
+    document.getElementById('summary-end-date').value = thaiToday;
     
-    // กำหนด event listeners
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS หลัก - เวอร์ชันปรับปรุง ⭐⭐
+    // =============================================
+    
+    // ฟอร์มกิจกรรม
     document.getElementById('activity-form').addEventListener('submit', handleActivityFormSubmit);
     document.getElementById('update-activity-button').addEventListener('click', handleActivityFormSubmit);
     document.getElementById('cancel-edit-activity-button').addEventListener('click', cancelEditActivity);
     
-    // Event listeners สำหรับจัดการผู้ทำกิจกรรม
-    document.getElementById('addPersonBtn').addEventListener('click', addPerson);
-    document.getElementById('editPersonBtn').addEventListener('click', editPerson);
-    document.getElementById('deletePersonBtn').addEventListener('click', deletePerson);
-    document.getElementById('resetPersonBtn').addEventListener('click', resetPerson);
-    document.getElementById('savePersonBtn').addEventListener('click', savePerson);
-    document.getElementById('cancelPersonBtn').addEventListener('click', closePersonModal);
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับจัดการผู้ทำกิจกรรม - เวอร์ชันปรับปรุง ⭐⭐
+    // =============================================
     
-    // Event listeners สำหรับจัดการประเภทกิจกรรม
-    document.getElementById('addActivityTypeBtn').addEventListener('click', addActivityType);
-    document.getElementById('editActivityTypeBtn').addEventListener('click', editActivityType);
-    document.getElementById('deleteActivityTypeBtn').addEventListener('click', deleteActivityType);
-    document.getElementById('resetActivityTypeBtn').addEventListener('click', resetActivityType);
-    document.getElementById('saveActivityTypeBtn').addEventListener('click', saveActivityType);
-    document.getElementById('cancelActivityTypeBtn').addEventListener('click', closeActivityTypeModal);
+    const addPersonBtn = document.getElementById('addPersonBtn');
+    const editPersonBtn = document.getElementById('editPersonBtn');
+    const deletePersonBtn = document.getElementById('deletePersonBtn');
+    const resetPersonBtn = document.getElementById('resetPersonBtn');
+    const savePersonBtn = document.getElementById('savePersonBtn');
+    const cancelPersonBtn = document.getElementById('cancelPersonBtn');
     
-    // Event listener สำหรับบันทึกเป็นรูปภาพ
-    const saveImageBtn = document.getElementById('saveSummaryAsImageBtn');
-    if (saveImageBtn) {
-        saveImageBtn.addEventListener('click', saveSummaryAsImage);
+    if (addPersonBtn) {
+        addPersonBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            addPerson();
+        });
     }
     
-    // Event listener สำหรับการเปลี่ยนแปลงผู้ทำกิจกรรม
-    document.getElementById('personSelect').addEventListener('change', updateCurrentPersonDisplay);
+    if (editPersonBtn) {
+        editPersonBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            editPerson();
+        });
+    }
     
-    // Event listeners สำหรับแสดง/ซ่อนรหัสผ่าน
-    document.getElementById('toggle-password').addEventListener('click', function() {
-        togglePasswordVisibility('backup-password', 'toggle-password');
+    if (deletePersonBtn) {
+        console.log('🔧 ตั้งค่า Event Listener สำหรับปุ่มลบผู้ทำกิจกรรม');
+        
+        // ลบ event listeners เดิมทั้งหมด (ถ้ามี)
+        deletePersonBtn.replaceWith(deletePersonBtn.cloneNode(true));
+        const newDeleteBtn = document.getElementById('deletePersonBtn');
+        
+        // ตั้งค่า event listeners ใหม่
+        newDeleteBtn.addEventListener('click', function(event) {
+            console.log('🖱️ เกิด event click บนปุ่มลบ');
+            event.preventDefault();
+            event.stopPropagation();
+            deletePerson(event);
+        });
+        
+        // สำหรับมือถือ: เพิ่ม event listener สำหรับ touch
+        newDeleteBtn.addEventListener('touchend', function(event) {
+            console.log('📱 เกิด event touchend บนปุ่มลบ');
+            event.preventDefault();
+            event.stopPropagation();
+            deletePerson(event);
+        });
+        
+        // ป้องกันการคลิกซ้ำ
+        let lastClickTime = 0;
+        newDeleteBtn.addEventListener('click', function(event) {
+            const now = Date.now();
+            if (now - lastClickTime < 1000) { // ป้องกันคลิกซ้ำภายใน 1 วินาที
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('⏳ ป้องกันการคลิกซ้ำ');
+                return;
+            }
+            lastClickTime = now;
+        });
+    }
+    
+    if (resetPersonBtn) {
+        resetPersonBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            resetPerson();
+        });
+    }
+    
+    if (savePersonBtn) {
+        savePersonBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            savePerson(event);
+        });
+    }
+    
+    if (cancelPersonBtn) {
+        cancelPersonBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            closePersonModal();
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับจัดการประเภทกิจกรรม ⭐⭐
+    // =============================================
+    
+    const addActivityTypeBtn = document.getElementById('addActivityTypeBtn');
+    const editActivityTypeBtn = document.getElementById('editActivityTypeBtn');
+    const deleteActivityTypeBtn = document.getElementById('deleteActivityTypeBtn');
+    const resetActivityTypeBtn = document.getElementById('resetActivityTypeBtn');
+    const saveActivityTypeBtn = document.getElementById('saveActivityTypeBtn');
+    const cancelActivityTypeBtn = document.getElementById('cancelActivityTypeBtn');
+    
+    if (addActivityTypeBtn) {
+        addActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            addActivityType();
+        });
+    }
+    
+    if (editActivityTypeBtn) {
+        editActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            editActivityType();
+        });
+    }
+    
+    if (deleteActivityTypeBtn) {
+        deleteActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            deleteActivityType();
+        });
+        
+        // สำหรับมือถือ
+        deleteActivityTypeBtn.addEventListener('touchend', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            deleteActivityType();
+        });
+    }
+    
+    if (resetActivityTypeBtn) {
+        resetActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            resetActivityType();
+        });
+    }
+    
+    if (saveActivityTypeBtn) {
+        saveActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            saveActivityType(event);
+        });
+    }
+    
+    if (cancelActivityTypeBtn) {
+        cancelActivityTypeBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeActivityTypeModal();
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับบันทึกเป็นรูปภาพ ⭐⭐
+    // =============================================
+    
+    const saveImageBtn = document.getElementById('saveSummaryAsImageBtn');
+    if (saveImageBtn) {
+        saveImageBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            saveSummaryAsImage();
+        });
+        
+        // สำหรับมือถือ
+        saveImageBtn.addEventListener('touchend', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            saveSummaryAsImage();
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับการเปลี่ยนแปลงผู้ทำกิจกรรม ⭐⭐
+    // =============================================
+    
+    const personSelect = document.getElementById('personSelect');
+    if (personSelect) {
+        personSelect.addEventListener('change', function(event) {
+            updateCurrentPersonDisplay();
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับแสดง/ซ่อนรหัสผ่าน ⭐⭐
+    // =============================================
+    
+    const togglePassword = document.getElementById('toggle-password');
+    const togglePasswordConfirm = document.getElementById('toggle-password-confirm');
+    
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            togglePasswordVisibility('backup-password', 'toggle-password');
+        });
+        
+        togglePassword.addEventListener('touchend', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            togglePasswordVisibility('backup-password', 'toggle-password');
+        });
+    }
+    
+    if (togglePasswordConfirm) {
+        togglePasswordConfirm.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            togglePasswordVisibility('backup-password-confirm', 'toggle-password-confirm');
+        });
+        
+        togglePasswordConfirm.addEventListener('touchend', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            togglePasswordVisibility('backup-password-confirm', 'toggle-password-confirm');
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับการคำนวณเวลาเริ่มต้นอัตโนมัติ ⭐⭐
+    // =============================================
+    
+    const endTimeInput = document.getElementById('end-time');
+    const durationHoursInput = document.getElementById('duration-hours');
+    const durationMinutesInput = document.getElementById('duration-minutes');
+    
+    if (endTimeInput) {
+        endTimeInput.addEventListener('change', function(event) {
+            calculateStartTime();
+        });
+        
+        endTimeInput.addEventListener('input', function(event) {
+            calculateStartTime();
+        });
+    }
+    
+    if (durationHoursInput) {
+        durationHoursInput.addEventListener('input', function(event) {
+            if (this.value < 0) this.value = 0;
+            calculateStartTime();
+        });
+        
+        durationHoursInput.addEventListener('change', function(event) {
+            calculateStartTime();
+        });
+    }
+    
+    if (durationMinutesInput) {
+        durationMinutesInput.addEventListener('input', function(event) {
+            if (this.value > 59) this.value = 59;
+            if (this.value < 0) this.value = 0;
+            calculateStartTime();
+        });
+        
+        durationMinutesInput.addEventListener('change', function(event) {
+            calculateStartTime();
+        });
+    }
+    
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับการจัดการเมนู ⭐⭐
+    // =============================================
+    
+    // Event listener สำหรับการคลิกนอกพื้นที่เพื่อซ่อนเมนูจัดการ
+    document.addEventListener('click', function(event) {
+        const allActions = document.querySelectorAll('.management-actions');
+        const isClickInsidePersonActions = document.getElementById('personActions')?.contains(event.target);
+        const isClickInsideActivityTypeActions = document.getElementById('activityTypeActions')?.contains(event.target);
+        const isClickOnPersonToggle = event.target.closest('#togglePersonControls');
+        const isClickOnActivityTypeToggle = event.target.closest('#toggleActivityTypeControls');
+        
+        if (!isClickInsidePersonActions && !isClickOnPersonToggle) {
+            const personActions = document.getElementById('personActions');
+            if (personActions) personActions.style.display = 'none';
+        }
+        
+        if (!isClickInsideActivityTypeActions && !isClickOnActivityTypeToggle) {
+            const activityTypeActions = document.getElementById('activityTypeActions');
+            if (activityTypeActions) activityTypeActions.style.display = 'none';
+        }
     });
     
-    document.getElementById('toggle-password-confirm').addEventListener('click', function() {
-        togglePasswordVisibility('backup-password-confirm', 'toggle-password-confirm');
+    // =============================================
+    // ⭐⭐ EVENT LISTENERS สำหรับ Responsive Design ⭐⭐
+    // =============================================
+    
+    window.addEventListener('resize', function() {
+        checkScreenSize();
+        adjustTableForMobile();
+        adjustTimeInputsForMobile();
     });
     
-    // Event listeners สำหรับการคำนวณเวลาเริ่มต้นอัตโนมัติ
-    document.getElementById('end-time').addEventListener('change', calculateStartTime);
-    document.getElementById('duration-hours').addEventListener('input', calculateStartTime);
-    document.getElementById('duration-minutes').addEventListener('input', calculateStartTime);
+    // =============================================
+    // ⭐⭐ เรียกครั้งแรกเพื่อแสดงสถานะเริ่มต้น ⭐⭐
+    // =============================================
     
-    // จำกัดค่าสูงสุดของนาทีเป็น 59
-    document.getElementById('duration-minutes').addEventListener('input', function() {
-        if (this.value > 59) this.value = 59;
-        if (this.value < 0) this.value = 0;
-        calculateStartTime();
-    });
-    
-    // จำกัดค่าสูงสุดของชั่วโมง
-    document.getElementById('duration-hours').addEventListener('input', function() {
-        if (this.value < 0) this.value = 0;
-        calculateStartTime();
-    });
-    
-    // เรียกครั้งแรกเพื่อแสดงสถานะเริ่มต้น
     updateCurrentPersonDisplay();
+    updatePersonFilterVisibility();
     
     // เปิดเมนูแรกโดยอัตโนมัติ
     setTimeout(() => {
@@ -3983,8 +4689,14 @@ document.getElementById('summary-end-date').value = thaiToday;
     // เรียกใช้ฟังก์ชัน responsive
     initResponsiveDesign();
     
+    // เรียกใช้ฟังก์ชันเลือกอัตโนมัติหลังจากโหลดข้อมูลทั้งหมด
+    setTimeout(() => {
+        console.log('🔄 กำลังตรวจสอบการเลือกอัตโนมัติ...');
+        autoSelectIfSingle();
+        console.log('✅ การเลือกอัตโนมัติเสร็จสิ้น');
+    }, 300);
+    
     console.log('✅ โหลดแอปพลิเคชันเสร็จสิ้น');
-
 });
 
 // === ฟังก์ชันเตรียมข้อมูลเริ่มต้น ===
@@ -4098,4 +4810,41 @@ function formatDurationForPrint(minutes) {
     
     if (parts.length === 0) return "0 นาที";
     return parts.join(' ');
+}
+// === ฟังก์ชันนับจำนวนกิจกรรมตามผู้ทำกิจกรรม ===
+function getActivityCountByPerson(personName) {
+    const allActivities = getFromLocalStorage('activities') || [];
+    const count = allActivities.filter(activity => activity.person === personName).length;
+    console.log(`🔢 นับกิจกรรมสำหรับ "${personName}": ${count} รายการ`);
+    return count;
+}
+
+// === ฟังก์ชันรีเซ็ตการแสดงผลอัตโนมัติ ===
+function resetAutoSelectionDisplay(type) {
+    console.log(`🔄 รีเซ็ตการแสดงผลสำหรับ ${type}`);
+    showDropdown(type);
+    
+    // เรียกใช้ฟังก์ชันเลือกอัตโนมัติใหม่หลังจากรีเฟรชข้อมูล
+    setTimeout(() => {
+        autoSelectIfSingle();
+    }, 100);
+}
+
+// === ฟังก์ชันแสดง Dropdown ===
+function showDropdown(type) {
+    const dropdown = document.getElementById(`${type}Select`);
+    const wrapper = dropdown.closest('.select-wrapper');
+    
+    if (!wrapper) return;
+    
+    // ลบ element ที่แสดงค่าที่เลือก
+    const displayElement = wrapper.querySelector('.selected-value-display');
+    if (displayElement) {
+        displayElement.remove();
+    }
+    
+    // แสดง dropdown
+    wrapper.classList.remove('hide-dropdown');
+    
+    console.log(`✅ แสดง dropdown ปกติสำหรับ ${type}`);
 }
