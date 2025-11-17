@@ -1,6 +1,6 @@
 // service-worker.js
-const staticCacheName = 'activity-tracker-static-v718';
-const dynamicCacheName = 'activity-tracker-dynamic-v718';
+const staticCacheName = 'activity-tracker-static-v568';
+const dynamicCacheName = 'activity-tracker-dynamic-v568';
 
 // ไฟล์ที่ต้องการ cache
 const assets = [
