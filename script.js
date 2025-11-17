@@ -1487,7 +1487,7 @@ function saveToFile() {
     } 
     
     // ถามชื่อไฟล์
-    const fileName = prompt("กรุณากรอกชื่อไฟล์สำหรับสำรองข้อมูล (ไม่ต้องใส่นามสกุล):", "สำรองกิจกรรม");
+    const fileName = prompt("กรุณากรอกชื่อไฟล์สำหรับสำรองข้อมูล (ไม่ต้องใส่นามสกุล):", "บันทึกกิจกรรม");
     if (!fileName) return;
     
     // บันทึกเป็น JSON โดยตรง
@@ -1805,7 +1805,7 @@ function exportActivities() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `สำรองกิจกรรม${timestamp}.json`;
+    link.download = `ข้อมูลกิจกรรม${timestamp}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -2494,6 +2494,7 @@ function displaySummary() {
     document.getElementById('summaryModal').style.display = 'flex';
 }
 
+// === ฟังก์ชันส่งออกสรุปเป็น XLSX ที่ปรับปรุงให้มีโครงสร้างเหมือน PDF ===
 function exportSummaryToXLSX() {
     // ใช้ SheetJS library สำหรับการส่งออก XLSX
     if (typeof XLSX === 'undefined') {
@@ -2501,75 +2502,23 @@ function exportSummaryToXLSX() {
         return;
     }
     
-    const { activities } = summaryContext;
-    
-    // สร้างข้อมูลสำหรับ Excel
-    const worksheetData = [
-        ['วันที่', 'เวลาเริ่มต้น', 'เวลาสิ้นสุด', 'ผู้ทำกิจกรรม', 'ประเภทกิจกรรม', 'รวมเวลา', 'รายละเอียด']
-    ];
-    
-    activities.forEach(activity => {
-        const duration = calculateDuration(activity.startTime, activity.endTime);
-        const formattedDuration = formatDuration(duration);
-        
-        worksheetData.push([
-            formatDateForDisplay(activity.date),
-            activity.startTime,
-            activity.endTime,
-            activity.person,
-            activity.activityName,
-            formattedDuration,
-            activity.details || ''
-        ]);
-    });
-    
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'กิจกรรม');
-    
-    // สร้างชื่อไฟล์
-    let fileName = 'กิจกรรมสรุป';
-    if (summaryContext.type === 'today') {
-        fileName = `กิจกรรม_${formatDateForDisplay(summaryContext.date)}`;
-    } else if (summaryContext.type === 'customDate') {
-        fileName = `กิจกรรม_${formatDateForDisplay(summaryContext.date)}`;
-    } else if (summaryContext.type === 'dateRange') {
-        fileName = `กิจกรรม_${formatDateForDisplay(summaryContext.startDate)}_ถึง_${formatDateForDisplay(summaryContext.endDate)}`;
-    } else {
-        fileName = 'กิจกรรมทั้งหมด';
-    }
-    
-    XLSX.writeFile(workbook, `${fileName}.xlsx`);
-    notifyDataManagement('export');
-}
-
-
-// === ฟังก์ชันสำหรับการพิมพ์ PDF ที่ปรับปรุงแล้ว (ไม่ใช้ popup) ===
-function exportSummaryToPDF() {
     const { type, activities, startDate, endDate, personFilter } = summaryContext;
     
-    if (!activities || activities.length === 0) {
-        alert('ไม่มีข้อมูลกิจกรรมสำหรับสร้าง PDF');
-        return;
-    }
-    
-    // ✅ ตรวจสอบว่ามีผู้ทำกิจกรรมแค่คนเดียวในระบบหรือไม่
-    const allPersons = getFromLocalStorage('persons') || [];
+    // ✅ หาผู้ทำกิจกรรมและข้อมูลสรุปเหมือนใน PDF
+    const allPersonsInSystem = getFromLocalStorage('persons') || [];
     let actualPersonFilter = personFilter;
-    if (allPersons.length === 1 && personFilter === 'all') {
-        actualPersonFilter = allPersons[0].name;
+    if (allPersonsInSystem.length === 1 && personFilter === 'all') {
+        actualPersonFilter = allPersonsInSystem[0].name;
     }
     
     const personSummaryText = actualPersonFilter !== 'all' 
         ? `สรุปกิจกรรมของ: ${actualPersonFilter}` 
         : 'สรุปกิจกรรมของ: ทุกคน';
 
-    // คำนวณข้อมูลสรุป
     const totalDurationAll = activities.reduce((total, activity) => {
         return total + calculateDuration(activity.startTime, activity.endTime);
     }, 0);
     
-    // จัดกลุ่มกิจกรรมตามประเภท
     const typeTotals = {};
     activities.forEach(activity => {
         const duration = calculateDuration(activity.startTime, activity.endTime);
@@ -2579,42 +2528,221 @@ function exportSummaryToPDF() {
         typeTotals[activity.activityName] += duration;
     });
     
-    // คำนวณจำนวนวันที่มีกิจกรรม
     const activityDates = [...new Set(activities.map(activity => activity.date))];
     const daysWithActivities = activityDates.length;
-
-    // ========== เพิ่มส่วนคำนวณวันที่ไม่มีกิจกรรม ==========
+    
     let totalDays = 0;
     let daysWithoutActivities = 0;
 
     if (startDate && endDate) {
-        // กรณีมีช่วงวันที่
         const start = new Date(startDate);
         const end = new Date(endDate);
         totalDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
         daysWithoutActivities = totalDays - daysWithActivities;
-    } else if (startDate) {
-        // กรณีวันเดียว
-        totalDays = 1;
-        daysWithoutActivities = daysWithActivities > 0 ? 0 : 1;
     } else {
-        // กรณีทั้งหมด (ใช้ช่วงเวลาของข้อมูลที่มี)
+         totalDays = daysWithActivities; // สำหรับ All-time/Brief-summary จะแสดงแค่จำนวนวันที่มีกิจกรรม
+         daysWithoutActivities = 0;
+    }
+    
+    const avgDurationPerDay = daysWithActivities > 0 ? totalDurationAll / daysWithActivities : 0;
+    const sortedActivities = [...activities].sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return b.startTime.localeCompare(a.startTime);
+    });
+
+    // 1. สร้างข้อมูลส่วนหัวและสรุปจำนวนวัน
+    const headerData = [
+        [personSummaryText],
+        [`สรุป ณ วันที่ ${getCurrentDateTimeThai().replace(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/, '$1 เวลา $2 น.')}`],
+        [''], // บรรทัดว่าง
+        ['สรุปจำนวนวัน'],
+        ['จำนวนวันทั้งหมด (ในช่วงที่เลือก)', totalDays, 'วัน'],
+        ['จำนวนวันที่มีกิจกรรม', daysWithActivities, 'วัน'],
+        ['วันที่ไม่มีกิจกรรม', daysWithoutActivities, 'วัน'],
+        ['เวลาเฉลี่ยต่อวัน', formatDuration(avgDurationPerDay)],
+        ['รวมเวลาทั้งหมด', formatDuration(totalDurationAll)],
+        [''], // บรรทัดว่าง
+    ];
+    
+    // 2. สร้างข้อมูลส่วนสรุปตามประเภทกิจกรรม
+    const typeSummaryData = [
+        ['สรุปตามประเภทกิจกรรม'],
+        ['ประเภทกิจกรรม', 'ระยะเวลารวม'],
+    ];
+    
+    Object.entries(typeTotals).forEach(([type, duration]) => {
+        typeSummaryData.push([
+            type,
+            formatDuration(duration)
+        ]);
+    });
+    
+    typeSummaryData.push(['']); // บรรทัดว่าง
+
+    // 3. สร้างข้อมูลส่วนรายการกิจกรรมทั้งหมด/ล่าสุด
+    const isBrief = type === 'brief-summary';
+    const activitiesToDisplay = isBrief ? sortedActivities.slice(0, 15) : sortedActivities;
+
+    let activityListData = [];
+    if (activitiesToDisplay.length > 0) {
+        activityListData = [
+            [isBrief ? `กิจกรรมล่าสุด (15 รายการ)` : `รายการกิจกรรมทั้งหมด (${activities.length} รายการ)`],
+            ['วันที่', 'เวลาเริ่มต้น', 'เวลาสิ้นสุด', 'ผู้ทำกิจกรรม', 'ประเภทกิจกรรม', 'รวมเวลา', 'รายละเอียด']
+        ];
+        
+        activitiesToDisplay.forEach(activity => {
+            const duration = calculateDuration(activity.startTime, activity.endTime);
+            const formattedDuration = formatDuration(duration);
+            
+            activityListData.push([
+                formatDateForDisplay(activity.date),
+                activity.startTime,
+                activity.endTime,
+                activity.person,
+                activity.activityName,
+                formattedDuration,
+                activity.details || ''
+            ]);
+        });
+    }
+
+    // รวมข้อมูลทั้งหมดเข้าด้วยกัน
+    const finalData = [
+        ...headerData,
+        ...typeSummaryData,
+        ...activityListData
+    ];
+    
+    // สร้าง Workbook และส่งออก
+    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'สรุปกิจกรรม');
+    
+    // ปรับความกว้างคอลัมน์ (Excel)
+    const wscols = [
+        { wch: 15 }, // A: หัวข้อ/ประเภทกิจกรรม
+        { wch: 15 }, // B: ค่า/ระยะเวลารวม/เวลาเริ่มต้น
+        { wch: 15 }, // C: หน่วย/เวลาสิ้นสุด
+        { wch: 15 }, // D: ผู้ทำกิจกรรม
+        { wch: 15 }, // E: ประเภทกิจกรรม
+        { wch: 15 }, // F: รวมเวลา
+        { wch: 40 }  // G: รายละเอียด
+    ];
+    worksheet['!cols'] = wscols;
+    
+    // สร้างชื่อไฟล์
+    let fileName = 'กิจกรรมสรุป';
+    if (startDate && endDate) {
+        if (startDate === endDate) {
+            fileName = `กิจกรรม_${formatDateForDisplay(startDate)}`;
+        } else {
+            fileName = `กิจกรรม_${formatDateForDisplay(startDate)}_ถึง_${formatDateForDisplay(endDate)}`;
+        }
+    } else {
+        fileName = 'กิจกรรมทั้งหมด';
+    }
+    
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+    notifyDataManagement('export');
+}
+
+// === ฟังก์ชันสำหรับจัดการเวลาไทย (จำเป็นสำหรับการแสดงผลใน PDF) ===
+function getCurrentDateTimeThai() {
+    const now = new Date();
+    // ใช้เวลาท้องถิ่น
+    const thaiDate = now.toLocaleDateString('th-TH', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+    }) + ' น.';
+    return thaiDate;
+}
+
+// === ฟังก์ชันสำหรับจัดการเวลาไทย (จำเป็นสำหรับการแสดงผลใน PDF) ===
+function getCurrentDateTimeThai() {
+    const now = new Date();
+    // ใช้เวลาท้องถิ่น
+    const thaiDate = now.toLocaleDateString('th-TH', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit'
+    }) + ' น.';
+    return thaiDate;
+}
+
+// === ฟังก์ชันส่งออกสรุปเป็น PDF (ปรับปรุงให้มีช่องว่างและจัดกึ่งกลางและแก้ไข Popup Blocker) ===
+function exportSummaryToPDF() {
+    const { type, activities, startDate, endDate, personFilter } = summaryContext;
+    
+    if (!activities || activities.length === 0) {
+        alert('ไม่มีข้อมูลกิจกรรมสำหรับสร้าง PDF');
+        return;
+    }
+    
+    // ⭐⭐⭐ จุดที่แก้ไขสำหรับ Popup Blocker ⭐⭐⭐
+    // เปิดหน้าต่างใหม่ทันทีที่ฟังก์ชันเริ่มทำงาน (ภายใต้บริบทของการคลิก)
+    const printWindow = window.open('', '_blank');
+    
+    // ตรวจสอบว่าเปิดหน้าต่างใหม่ได้หรือไม่
+    if (!printWindow) {
+        // หากเปิดไม่ได้ แสดงว่าถูก Popup Blocker บล็อก
+        alert('ไม่สามารถเปิดหน้าต่างใหม่ได้ กรุณาปิด Popup Blocker แล้วลองอีกครั้ง');
+        notifyDataManagement('export');
+        return;
+    }
+    
+    const allPersonsInSystem = getFromLocalStorage('persons') || [];
+    let actualPersonFilter = personFilter;
+    if (allPersonsInSystem.length === 1 && personFilter === 'all') {
+        actualPersonFilter = allPersonsInSystem[0].name;
+    }
+    
+    const personSummaryText = actualPersonFilter !== 'all' 
+        ? `สรุปกิจกรรมของ: ${actualPersonFilter}` 
+        : 'สรุปกิจกรรมของ: ทุกคน';
+
+    const totalDurationAll = activities.reduce((total, activity) => {
+        return total + calculateDuration(activity.startTime, activity.endTime);
+    }, 0);
+    
+    const typeTotals = {};
+    activities.forEach(activity => {
+        const duration = calculateDuration(activity.startTime, activity.endTime);
+        if (!typeTotals[activity.activityName]) {
+            typeTotals[activity.activityName] = 0;
+        }
+        typeTotals[activity.activityName] += duration;
+    });
+    
+    const activityDates = [...new Set(activities.map(activity => activity.date))];
+    const daysWithActivities = activityDates.length;
+
+    let totalDays = 0;
+    let daysWithoutActivities = 0;
+
+    // คำนวณช่วงวันที่และจำนวนวัน
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        totalDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        daysWithoutActivities = totalDays - daysWithActivities;
+    } else {
         if (activityDates.length > 0) {
             const sortedDates = activityDates.sort();
             const firstDate = new Date(sortedDates[0]);
             const lastDate = new Date(sortedDates[sortedDates.length - 1]);
             totalDays = Math.floor((lastDate - firstDate) / (1000 * 60 * 60 * 24)) + 1;
             daysWithoutActivities = totalDays - daysWithActivities;
-        } else {
-            totalDays = 0;
-            daysWithoutActivities = 0;
         }
     }
     
-    // คำนวณค่าเฉลี่ยต่อวัน
     const avgDurationPerDay = daysWithActivities > 0 ? totalDurationAll / daysWithActivities : 0;
     
-    // กำหนดช่วงวันที่
     let dateRangeText = '';
     if (startDate && endDate) {
         if (startDate === endDate) {
@@ -2622,8 +2750,6 @@ function exportSummaryToPDF() {
         } else {
             dateRangeText = `ช่วงวันที่ ${formatDateForDisplay(startDate)} ถึง ${formatDateForDisplay(endDate)}`;
         }
-    } else if (startDate) {
-        dateRangeText = `สรุปของวันที่ ${formatDateForDisplay(startDate)}`;
     } else {
         const allDates = activityDates.sort();
         if (allDates.length > 0) {
@@ -2637,379 +2763,212 @@ function exportSummaryToPDF() {
         }
     }
     
-    // ตั้งชื่อไฟล์ PDF ให้มีเวลาพ่วงท้าย (ใช้ปี พ.ศ.)
-    const now = new Date();
-    const thaiYear = now.getFullYear() + 543;
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const day = now.getDate().toString().padStart(2, '0');
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    
-    const timestamp = `${day}${month}${thaiYear}_${hours}${minutes}`;
-    const fileName = `สรุปกิจกรรม-${timestamp}.pdf`;
+    const sortedActivities = [...activities].sort((a, b) => {
+        const d = b.date.localeCompare(a.date);
+        return d !== 0 ? d : b.startTime.localeCompare(a.startTime);
+    });
 
-    // สร้าง HTML สำหรับพิมพ์ - ปรับให้เหมือนในหน้าจอทุกประการ
-    let printHTML = `
+    const isBrief = type === 'brief-summary';
+    const activitiesToDisplay = isBrief ? sortedActivities.slice(0, 15) : sortedActivities;
+
+   let printHTML = `
         <!DOCTYPE html>
         <html>
         <head>
             <title>${personSummaryText}</title>
             <meta charset="UTF-8">
             <style>
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
-                
-                body { 
-                    font-family: Arial, sans-serif; 
-                    margin: 10mm 3mm 5mm 8mm;
-                    padding: 0;
-                    color: blue;
-                    line-height: 1.0;
-                    font-size: 7px;
-                    text-align: center;
-                    background-color: #FAFAD2;
-                }
-                
-                .summary-container {
-                    width: 100%;
-                    margin: 0 auto;
-                    padding: 2px;
-                    border: 1px solid #F660EB;
-                    border-radius: 8px;
-                    background-color: #FAFAD2;
-                    text-align: center;
-                    line-height: 1.0;
-                }
-                
-                .header-section { 
-                    text-align: center; 
-                    margin-bottom: 1px;
-                    padding-bottom: 0.5px;
-                    border-bottom: 0.5px solid #F660EB;
-                }
-                
-                .header-section h3 { 
-                    color: blue; 
-                    font-size: 0.7rem; 
-                    line-height: 1.0; 
-                    margin: 0.5px 0;
-                }
-                
-                .summary-section {
-                    background-color: #FAFAD2;
-                    padding: 1px;
-                    margin: 1px 0;
-                    text-align: center;
-                    color: blue;
-                }
-                
-                .summary-section h4 {
-                    margin: 1px 0;
-                    font-size: 0.7rem;
-                    line-height: 1.0;
-                    color: blue;
-                }
-                
-                .day-summary-line {
-                    margin: 1px 0;
-                    font-size: 0.65rem;
-                    line-height: 1.0;
-                    color: blue;
-                }
-
-                /* ===== ตารางแบบกะทัดรัด ===== */
-                table { 
-                    width: 100%; 
-                    border-collapse: collapse; 
-                    margin: 2px 0;
-                    font-size: 0.6rem;
-                    table-layout: fixed;
-                    color: blue;
-                }
-                
-                th { 
-                    background-color: #007bff;
-                    color: blue;
-                    padding: 1px;
-                    border: 0.5px solid #ddd;
-                    text-align: center;
-                    font-size: 0.6rem;
-                    font-weight: normal;
-                    height: 8px;
-                }
-                
-                td { 
-                    padding: 1px;
-                    border: 0.5px solid #ddd;
-                    text-align: center;
-                    font-size: 0.55rem;
-                    line-height: 1.0;
-                    height: 7px;
-                    color: blue;
-                }
-
-                /* ตั้งค่าหน้ากระดาษ */
                 @page {
-                    margin: 1mm;
+                    margin: 15mm 5mm 3mm 8mm;
                     size: A4;
+                    @top-right {
+                        content: "หน้า " counter(page) " จาก " counter(pages);
+                        font-size: 8px;
+                        font-family: Tahoma, Arial, sans-serif;
+                        color: #000; /* สีตัวเลขหน้า */
+                    }
+                }
+                body { 
+                    font-family: Tahoma, Arial, sans-serif; 
+                    font-size: 8px; 
+                    color: #000; /* สีตัวหนังสือหลักเป็นสีดำ */
+                    padding: 0; 
+                    margin: 0; 
+                    text-align: center; /* จัดเนื้อหาทั้งหมดใน Body ให้อยู่กึ่งกลาง */
+                }
+                .summary-container { 
+                    max-width: 100%; 
+                    margin: 0 auto; 
+                    text-align: center; /* จัดกึ่งกลางคอนเทนเนอร์หลัก */
+                }
+                .header-section {
+                    text-align: center;
+                    margin-bottom: 10px;
+                }
+                h3 { 
+                    color: #000; /* สีหัวข้อหลักเป็นสีดำ */
+                    font-size: 1.2rem;
+                    line-height: 1.5;
+                    margin: 5px 0; 
+                    text-align: center; 
+                }
+                h4 { 
+                    color: #000; /* สีหัวข้อรองเป็นสีดำ */
+                    margin: 10px 0 5px 0;
+                    font-size: 1rem; 
+                    border-bottom: 1px solid #ddd; /* สีเส้นขีดแบ่งเป็นสีเทา */
+                    padding-bottom: 2px; 
+                    text-align: center; /* หัวข้อตารางจัดกึ่งกลาง */
+                }
+                p.data-row-title, p.data-row {
+                    color: #000; /* สีข้อความสรุปเป็นสีดำ */
                 }
 
-                /* ตารางแบบกะทัดรัดมากสำหรับกิจกรรมทั้งหมด */
-                .super-compact-table {
-                    font-size: 0.5rem;
-                    color: blue;
+                table { 
+                    width:100%; 
+                    border-collapse:collapse; 
+                    table-layout:fixed; 
+                    margin: 5px 0; 
                 }
-                
-                .super-compact-table th,
-                .super-compact-table td {
-                    padding: 0.5px;
-                    font-size: 0.5rem;
-                    height: 6px;
-                    color: blue;
+                th,td { 
+                    border:0.5px solid #000; 
+                    padding:2px; 
+                    font-size:0.7rem; 
+                    word-wrap: break-word; 
+                    text-align: center; /* เนื้อหาตารางจัดกึ่งกลาง */
                 }
-
-                /* ปรับความกว้างคอลัมน์ให้พอดี */
-                .col-activity { width: 22%; }
-                .col-date { width: 12%; }
-                .col-time { width: 18%; }
-                .col-duration { width: 13%; }
-                .col-details { width: 35%; }
-                
-                .col-type { width: 60%; }
-                .col-total { width: 40%; }
-
-                /* ควบคุมการแบ่งหน้า */
-                .no-break {
-                    page-break-inside: avoid;
+                th { 
+                    background-color: #007bff; 
+                    color: white; 
                 }
+                .data-row { 
+                    line-height: 1.5; /* เพิ่มช่องว่างระหว่างบรรทัดในส่วนสรุปจำนวนวัน */
+                    margin: 3px 0; 
+                    font-size: 0.9rem; 
+                    text-align: center; /* จัดกึ่งกลางข้อความสรุปย่อย */
+                }
+                .data-row-title {
+                    line-height: 1.5;
+                    margin: 3px 0;
+                    font-size: 0.9rem;
+                    text-align: center;
+                }
+                .no-break-row{page-break-inside:avoid;}
             </style>
         </head>
         <body>
             <div class="summary-container">
-                <!-- ส่วนหัวเหมือนในหน้าจอ -->
-                <div class="header-section no-break">
+                <div class="header-section">
                     <h3>${personSummaryText}</h3>
-                    <h3>สรุปวันที่ ${getCurrentDateTimeThai().replace(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/, '$1 เวลา $2 น.')}</h3>
-                    <h3>${dateRangeText}</h3>
+                    <p class="data-row-title">สรุป ณ วันที่ ${getCurrentDateTimeThai().replace(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/, '$1 เวลา $2 น.')}</p>
+                    <p class="data-row-title">${dateRangeText}</p>
+                </div>
+                
+                <h4>สรุปจำนวนวัน</h4>
+                <div style="font-size: 0.8rem; line-height: 1.3; text-align: center;">
+                    <p class="data-row">• จำนวนวันทั้งหมด: ${totalDays} วัน</p>
+                    <p class="data-row">• จำนวนวันที่มีกิจกรรม: ${daysWithActivities} วัน</p>
+                    <p class="data-row">• วันที่ไม่มีกิจกรรม: ${daysWithoutActivities} วัน</p>
+                    <p class="data-row">• เวลาเฉลี่ยต่อวัน: ${formatDuration(avgDurationPerDay)}</p>
+                    <p class="data-row">• รวมเวลาทั้งหมด: ${formatDuration(totalDurationAll)}</p>
                 </div>
 
-                <!-- ส่วนสรุปจำนวนวัน -->
-                <div class="summary-section no-break">
-                    <h4>สรุปจำนวนวัน</h4>
-                    <div class="day-summary">
-                        <div class="day-summary-line">• จำนวนวันทั้งหมด: ${totalDays} วัน</div>
-                        <div class="day-summary-line">• จำนวนวันที่มีกิจกรรม: ${daysWithActivities} วัน</div>
-                        <div class="day-summary-line">• วันที่ไม่มีกิจกรรม: ${daysWithoutActivities} วัน</div>
-                        <div class="day-summary-line">• เวลาเฉลี่ยต่อวัน: ${formatDuration(avgDurationPerDay)}</div>
-                        <div class="day-summary-line">• รวมเวลาทั้งหมด: ${formatDuration(totalDurationAll)}</div>
-                    </div>
-                </div>
-
-                <!-- ส่วนสรุปตามประเภทกิจกรรม -->
-                <div class="no-break">
-                    <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
-                        สรุปตามประเภทกิจกรรม
-                    </h4>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="col-type">ประเภทกิจกรรม</th>
-                                <th class="col-total">ระยะเวลารวม</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-    `;
-    
-    // เพิ่มแถวข้อมูลประเภทกิจกรรม
-    Object.entries(typeTotals).forEach(([type, duration]) => {
-        printHTML += `
-            <tr>
-                <td class="col-type">${type}</td>
-                <td class="col-total">${formatDuration(duration)}</td>
-            </tr>
-        `;
-    });
-    
-    printHTML += `
-                        </tbody>
-                    </table>
-                </div>
-    `;
-    
-    // สำหรับสรุปอย่างย่อ
-    if (type === 'brief-summary') {
-        printHTML += `
-            <div class="no-break">
-                <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
-                    กิจกรรมล่าสุด (15 รายการ)
-                </h4>
+                <h4>สรุปตามประเภทกิจกรรม</h4>
                 <table>
                     <thead>
                         <tr>
-                            <th class="col-activity">กิจกรรม</th>
-                            <th class="col-date">วันที่</th>
-                            <th class="col-time">เวลาเริ่ม&สิ้นสุด</th>
-                            <th class="col-duration">รวมเวลา</th>
-                            <th class="col-details">รายละเอียด</th>
+                            <th style="width: 50%;">ประเภทกิจกรรม</th>
+                            <th style="width: 50%;">ระยะเวลารวม</th>
                         </tr>
                     </thead>
                     <tbody>
-        `;
+    `;
 
-        const latestActivities = [...activities]
-            .sort((a, b) => {
-                const dateCompare = b.date.localeCompare(a.date);
-                if (dateCompare !== 0) return dateCompare;
-                return b.startTime.localeCompare(a.startTime);
-            })
-            .slice(0, 15);
-
-        latestActivities.forEach(activity => {
-            const duration = calculateDuration(activity.startTime, activity.endTime);
-            printHTML += `
-                <tr>
-                    <td class="col-activity">${activity.activityName}</td>
-                    <td class="col-date">${formatDateForDisplay(activity.date)}</td>
-                    <td class="col-time">${activity.startTime} - ${activity.endTime}</td>
-                    <td class="col-duration">${formatDuration(duration)}</td>
-                    <td class="col-details">${activity.details || '-'}</td>
-                </tr>
-            `;
-        });
-
+    Object.entries(typeTotals).forEach(([type, duration]) => {
         printHTML += `
-                    </tbody>
-                </table>
-            </div>
+            <tr class="no-break-row">
+                <td>${type}</td>
+                <td>${formatDuration(duration)}</td>
+            </tr>
         `;
-    } else {
-        // สำหรับสรุปแบบเต็ม - ใช้ตารางแบบกะทัดรัดมาก
-        printHTML += `
-            <div class="no-break">
-                <h4 style="color: blue; margin: 1px 0; font-size: 0.7rem;">
-                    รายการกิจกรรมทั้งหมด (${activities.length} รายการ)
-                </h4>
-                <table class="super-compact-table">
-                    <thead>
-                        <tr>
-                            <th class="col-activity">กิจกรรม</th>
-                            <th class="col-date">วันที่</th>
-                            <th class="col-time">เวลาเริ่ม&สิ้นสุด</th>
-                            <th class="col-duration">รวมเวลา</th>
-                            <th class="col-details">รายละเอียด</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+    });
 
-        const sortedActivities = [...activities].sort((a, b) => {
-            const dateCompare = b.date.localeCompare(a.date);
-            if (dateCompare !== 0) return dateCompare;
-            return b.startTime.localeCompare(a.startTime);
-        });
-
-        sortedActivities.forEach(activity => {
-            const duration = calculateDuration(activity.startTime, activity.endTime);
-            // ย่อรายละเอียดถ้ายาวเกินไป
-            const shortDetails = activity.details && activity.details.length > 30 
-                ? activity.details.substring(0, 30) + '...' 
-                : (activity.details || '-');
-                
-            printHTML += `
-                <tr>
-                    <td class="col-activity">${activity.activityName}</td>
-                    <td class="col-date">${formatDateForDisplay(activity.date)}</td>
-                    <td class="col-time">${activity.startTime} - ${activity.endTime}</td>
-                    <td class="col-duration">${formatDuration(duration)}</td>
-                    <td class="col-details">${shortDetails}</td>
-                </tr>
-            `;
-        });
-
-        printHTML += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-    
     printHTML += `
-            </div>
-            <div style="font-size: 5px; margin-top: 1px; text-align: center; color: blue;">
-                สร้างเมื่อ: ${new Date().toLocaleDateString('th-TH')} - ระบบบันทึกกิจกรรม
-            </div>
+                    </tbody>
+                </table>
+                <br>
+    `;
+
+    printHTML += `
+        <h4>${isBrief ? "กิจกรรมล่าสุด (15 รายการ)" : `รายการกิจกรรมทั้งหมด (${activities.length} รายการ)`}</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 17%;">กิจกรรม</th>
+                    <th style="width: 10%;">วันที่</th>
+                    <th style="width: 15%;">เวลาเริ่ม-สิ้นสุด</th>
+                    <th style="width: 12%;">รวมเวลา</th>
+                    <th style="width: 46%;">รายละเอียด</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    activitiesToDisplay.forEach(activity => {
+        const duration = calculateDuration(activity.startTime, activity.endTime);
+        printHTML += `
+            <tr class="no-break-row">
+                <td>${activity.activityName}</td>
+                <td>${formatDateForDisplay(activity.date)}</td>
+                <td>${activity.startTime} - ${activity.endTime}</td>
+                <td>${formatDuration(duration)}</td>
+                <td>${activity.details || '-'}</td>
+            </tr>
+        `;
+    });
+
+    printHTML += `
+            </tbody>
+        </table>
+        </div>
         </body>
         </html>
     `;
+
+    // ⭐⭐⭐ ใช้ printWindow ที่ถูกเปิดแล้วทันที ⭐⭐⭐
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
     
-    // วิธีที่ 1: พิมพ์โดยตรงในหน้าเดิม (ไม่ใช้ popup)
-    try {
-        // สร้าง iframe แทนการใช้ window.open
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(printHTML);
-        iframeDoc.close();
-        
-        // พิมพ์หลังจากโหลดเนื้อหาเสร็จ
+    printWindow.onload = () => {
         setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            
-            // ลบ iframe หลังจากพิมพ์เสร็จ
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 1000);
-            
-        }, 500);
-        
-        showToast('กำลังเตรียมพิมพ์ PDF...', 'success');
-        
-    } catch (error) {
-        console.error('Error printing PDF:', error);
-        
-        // วิธีที่ 2: ใช้วิธีพิมพ์ธรรมดาในกรณีที่วิธีแรกไม่ทำงาน
-        try {
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                printWindow.document.open();
-                printWindow.document.write(printHTML);
-                printWindow.document.close();
-                printWindow.print();
-            } else {
-                // วิธีที่ 3: แสดง HTML ในหน้าเดิมและพิมพ์
-                const printSection = document.createElement('div');
-                printSection.innerHTML = printHTML;
-                printSection.style.position = 'fixed';
-                printSection.style.top = '0';
-                printSection.style.left = '0';
-                printSection.style.width = '100%';
-                printSection.style.height = '100%';
-                printSection.style.zIndex = '9999';
-                printSection.style.backgroundColor = 'white';
-                printSection.style.overflow = 'auto';
-                
-                document.body.appendChild(printSection);
-                
-                setTimeout(() => {
-                    window.print();
-                    setTimeout(() => {
-                        document.body.removeChild(printSection);
-                    }, 100);
-                }, 500);
-            }
-        } catch (fallbackError) {
-            console.error('Fallback printing also failed:', fallbackError);
-            alert('ไม่สามารถพิมพ์ PDF ได้ กรุณาตรวจสอบการตั้งค่าป้องกันป๊อปอัพของเบราว์เซอร์');
-        }
-    }
+            printWindow.focus();
+            printWindow.print();
+        }, 300); // ลด delay ลงเหลือ 300ms เพื่อความรวดเร็ว
+    };
+    
+    notifyDataManagement('export');
+    showToast('กำลังเตรียมพิมพ์ PDF...', 'success');
 }
+function formatDurationForPrint(minutes) {
+    if (isNaN(minutes) || minutes < 0) return "0 นาที";
+
+    const totalSeconds = Math.round(minutes * 60);
+    const hours = Math.floor(totalSeconds / 3600);
+    const remainingMinutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    let parts = [];
+
+    if (hours > 0) parts.push(`${hours} ชั่วโมง`);
+    if (remainingMinutes > 0) parts.push(`${remainingMinutes} นาที`);
+    if (seconds > 0) parts.push(`${seconds} วินาที`);
+
+    // ถ้าทุกอย่างเป็น 0 ให้คืน "0 นาที"
+    if (parts.length === 0) return "0 นาที";
+
+    return parts.join(' ');
+}
+
 // ฟังก์ชันเสริมสำหรับการพิมพ์ PDF
 function getCurrentDateTimeThai() {
     const now = new Date();
@@ -4025,7 +3984,7 @@ function initializeDefaultData() {
     // กำหนดค่าเริ่มต้นสำหรับผู้ทำกิจกรรม
     if (!getFromLocalStorage('persons') || getFromLocalStorage('persons').length === 0) {
         const defaultPersons = [
-            { name: 'อาจารย์' },
+            { name: 'พระอาจารย์' },
             { name: 'ลูกศิษย์' },
             { name: 'เด็กวัด' },
         ];
